@@ -11,7 +11,8 @@
   <!-- Pass the actual Stonewards installation directory via -p:GameDir=... -->
   <PropertyGroup>
     <GameManaged>$(GameDir)\Stonewards_Data\Managed</GameManaged>
-    <BepInExCore>$(GameDir)\BepInEx\core</BepInExCore>
+    <BepInExDir Condition="'$(BepInExDir)' == ''">$(GameDir)\BepInEx</BepInExDir>
+    <BepInExCore>$(BepInExDir)\core</BepInExCore>
   </PropertyGroup>
 
   <ItemGroup>
