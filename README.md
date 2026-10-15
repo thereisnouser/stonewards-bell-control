@@ -19,40 +19,45 @@
 ## Requirements
 
 - Stonewards 0.2.3 on Windows
-- BepInEx **5** installed in the game directory
+- BepInEx **5** installed in the game directory **or in the active r2modman profile**
 - .NET SDK supporting `netstandard2.1` (required to *build*; not required to run a built DLL)
 - Locally installed game assemblies (`Stonewards_Data/Managed`) and BepInEx core DLLs (referenced during compilation)
 
 This repository does **not** contain or distribute copyrighted game DLLs.
 
-## Build
+## Build and install (r2modman)
 
-In PowerShell, from the repository root:
-
-```powershell
-.\scripts\build.ps1 -GameDir 'C:\Program Files (x86)\Steam\steamapps\common\Stonewards'
-```
-
-Change the path to your actual installation. Alternatively, use the SDK directly:
+Run PowerShell from the cloned repository directory:
 
 ```powershell
-dotnet build .\src\StonewardsBellControl\StonewardsBellControl.csproj -c Release -p:GameDir='C:\path\to\Stonewards'
+powershell -ExecutionPolicy Bypass -File .\build-and-install.ps1 `
+  -GameDir "F:\Steam\steamapps\common\Stonewards" `
+  -ProfileDir "C:\Users\user\AppData\Roaming\r2modmanPlus-local\Stonewards\profiles\stonewards"
 ```
 
-The resulting plugin is:
+**Adjust both paths to your installation and active r2modman profile.** The script finds Unity game DLLs in `GameDir\Stonewards_Data\Managed`, BepInEx assemblies in `ProfileDir\BepInEx\core`, builds the plugin, and installs it to:
 
 ```text
-src/StonewardsBellControl/bin/Release/netstandard2.1/StonewardsBellControl.dll
+<ProfileDir>/BepInEx/plugins/StonewardsBellControl/StonewardsBellControl.dll
 ```
 
-## Install
+Then launch the game **through the same r2modman profile**.
 
-1. Make sure **BepInEx 5** is installed and has generated a `BepInEx/plugins` folder after launching Stonewards.
-2. Copy `StonewardsBellControl.dll` into `Stonewards/BepInEx/plugins/` on the **host's PC**.
-3. Launch the game as host. In a hosted session, the upper-right panel shows the current permission.
-4. Press **F8** or click **Allow / Block** to change who can ring.
+To compile without installing, omit `-ProfileDir` when BepInEx lives inside the game directory, or use `-NoInstall` with `-ProfileDir`. You can also set `-BepInExDir` explicitly when dependencies are in a different directory.
 
-**Guests do not need to install the mod.** To uninstall, remove the plugin DLL from `BepInEx/plugins`.
+## Build only (BepInEx installed into game directory)
+
+```powershell
+.\scripts\build.ps1 -GameDir "F:\Steam\steamapps\common\Stonewards"
+```
+
+The build output is `src/StonewardsBellControl/bin/Release/netstandard2.1/StonewardsBellControl.dll`.
+
+## Manual installation
+
+Copy the built `StonewardsBellControl.dll` into the **host's active** `BepInEx/plugins` directory (the r2modman profile if you use r2modman). Launch the game, host a session and press **F8** to toggle guest bell permissions. The panel is only displayed for the host.
+
+**Guests do not need the plugin.** Remove the DLL to uninstall. Do not deploy a build into both the game directory and a mod manager profile at the same time.
 
 ## How it works
 
