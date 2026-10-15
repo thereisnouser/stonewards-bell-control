@@ -24,6 +24,11 @@
       <HintPath>$(GameManaged)\Mirror.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <!-- BepInEx 5 references MonoBehaviour through the UnityEngine compatibility assembly. -->
+    <Reference Include="UnityEngine">
+      <HintPath>$(GameManaged)\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$(GameManaged)\UnityEngine.CoreModule.dll</HintPath>
       <Private>false</Private>
