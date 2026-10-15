@@ -18,6 +18,7 @@ $bepInExCore = Join-Path $resolvedGameDir 'BepInEx\core'
 $requiredFiles = @(
     (Join-Path $managedDir 'Assembly-CSharp.dll'),
     (Join-Path $managedDir 'Mirror.dll'),
+    (Join-Path $managedDir 'UnityEngine.dll'),
     (Join-Path $managedDir 'UnityEngine.CoreModule.dll'),
     (Join-Path $managedDir 'UnityEngine.IMGUIModule.dll'),
     (Join-Path $managedDir 'Unity.InputSystem.dll'),
