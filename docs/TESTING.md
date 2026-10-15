@@ -13,7 +13,11 @@ The checks below are **not completed tests**. They should be performed before pu
 
 - [ ] Host boots without a plugin load or Harmony patch error.
 - [ ] Native Canvas panel is visible only to host; F8 changes `BLOCKED` / `ALLOWED`.
-- [ ] Panel uses Party HUD-inspired colors and button changes state with F8.
+- [ ] Panel uses Party HUD's stepped border, gold button outline and native Jersey10 typeface.
+- [ ] With `Anchor = TopRight`, `VerticalOffset = 80`, and `AvoidGoldCounter = true`, the gold count at upper-right remains fully visible.
+- [ ] With `AvoidGoldCounter = false`, the panel can be positioned closer to the top with VerticalOffset.
+- [ ] With the cursor locked, the new Canvas does not intercept mouse-looking or gameplay interactions.
+- [ ] Button changes state with F8.
 - [ ] On-screen button toggles state with cursor visible, without intercepting other UI clicks.
 - [ ] For TopRight anchor, lowering VerticalOffset moves the panel up.
 - [ ] Panel remains on-screen when changing resolution, anchor and scale.

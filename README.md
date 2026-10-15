@@ -10,7 +10,8 @@
 - 🔒 **Guests blocked by default** when a host session starts.
 - 👑 **The host can always ring** the bell.
 - 🔓 **F8** toggles guest permissions; a host-only **Allow / Block** button appears in a native Unity Canvas.
-- 🎨 Party HUD-inspired colors: dark background, muted gold frame and burgundy header.
+- 🎨 Party HUD-style stepped frame, graphite action button, muted gold and burgundy palette, and Stonewards' native Jersey10 font where available.
+- 💰 Automatically reserves the upper-right area used by the vanilla gold counter.
 - 📐 Configurable **Anchor**, **HorizontalOffset**, **VerticalOffset** and **Scale** in the BepInEx config.
 - 🛡️ **Server-side enforcement:** guest ring commands are ignored when blocked, even if guests do not have the plugin.
 - 🔄 **Resets on each hosted session:** returning to the menu / rehosting restores the blocked setting.
@@ -55,13 +56,15 @@ Open the generated `BepInEx/config/dev.stonewards.bellcontrol.cfg` in your activ
 [Appearance]
 Anchor = TopRight
 HorizontalOffset = 14
-VerticalOffset = 80
+VerticalOffset = 132
+AvoidGoldCounter = true
 Scale = 1
 ```
 
 - `Anchor`: `TopRight`, `TopLeft`, `BottomRight` or `BottomLeft`.
 - `HorizontalOffset`: distance **inward** from the selected left/right edge.
-- `VerticalOffset`: distance **inward** from the selected top/bottom edge. For `TopRight` or `TopLeft`, **smaller moves the panel up**; larger moves it down.
+- `VerticalOffset`: physical pixel distance **inward** from the selected top/bottom edge. For `TopRight` or `TopLeft`, **smaller moves the panel up**; larger moves it down.
+- `AvoidGoldCounter`: when `true` and `Anchor = TopRight`, the panel's top edge is never closer than **132 physical pixels** to the screen's top, so the native gold counter remains visible. Older profiles with `VerticalOffset = 80` are automatically protected. Disable to position the panel closer to the top edge.
 - `Scale`: from `0.65` to `1.60`. The panel is also reduced if needed to stay on-screen.
 
 Changes are picked up while the game is running when BepInEx updates its configuration; restarting the game reliably applies manual file edits. Offsets are clamped only to keep the panel on-screen.
@@ -96,7 +99,7 @@ With guest access blocked, those calls are ignored. Host-local calls use the gam
 ## Known limitations
 
 - Guests still see vanilla bell interaction text and progress UI, but their ring request will be denied while blocked.
-- The host's on-screen button requires an active UI cursor (F8 works regardless of cursor lock).
+- The host's on-screen button requires an active UI cursor (F8 works regardless of cursor lock). While the cursor is locked, the mod disables its UI raycaster to avoid interfering with mouse look.
 - Native uGUI dependencies must be present in the installed game.
 - If guests began an animation while allowed, locking them out mid-interaction may leave a brief visual mismatch. The final ring request remains blocked.
 - This does **not** prevent other modded clients or game mechanics from invoking unrelated wave-start logic.
@@ -107,7 +110,7 @@ See [multiplayer test plan](docs/TESTING.md) before publishing a release.
 
 ## Project status
 
-**v0.2.0 — experimental Canvas UI update.** No compiled release asset is included. If the game updates, inspect the new assembly before claiming compatibility.
+**v0.2.1 — experimental Party HUD-style Canvas UI refinement.** No compiled release asset is included. If the game updates, inspect the new assembly before claiming compatibility.
 
 ## License
 

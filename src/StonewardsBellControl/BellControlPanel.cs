@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,43 +14,54 @@ namespace StonewardsBellControl
     }
 
     /// <summary>
-    /// Native Unity uGUI panel with a Canvas, RectTransforms, Images, Text and Button.
-    /// Colors mirror the visual palette used by Stonewards Party HUD.
-    /// No OnGUI or manually calculated pixel-based GUI.Rect positions.
+    /// Party HUD-inspired Unity Canvas: the same stepped border, burgundy header,
+    /// graphite buttons and the game's own Jersey10 font. It remains independent
+    /// of Party HUD and does not distribute game textures or font files.
     /// </summary>
     internal sealed class BellControlPanel : IDisposable
     {
-        private const float PanelWidth = 284f;
-        private const float PanelHeight = 124f;
+        private const float Width = 278f;
+        private const float Height = 112f;
+        private const float HeaderHeight = 38f;
         private const float EdgePadding = 6f;
+        // Gold HUD occupies the upper-right edge. Reserve physical pixels so
+        // existing VerticalOffset=80 configurations also cannot obscure it.
+        private const float GoldSafeTopPixels = 132f;
 
-        private static readonly Color FrameColor = new Color(0.72f, 0.64f, 0.48f, 1f);
-        private static readonly Color BackgroundColor = new Color(19f / 255f, 23f / 255f, 32f / 255f, 0.97f);
-        private static readonly Color HeaderColor = new Color(76f / 255f, 46f / 255f, 48f / 255f, 1f);
-        private static readonly Color DividerColor = new Color(0.71f, 0.63f, 0.48f, 0.38f);
-        private static readonly Color PrimaryText = new Color(0.94f, 0.91f, 0.83f, 1f);
-        private static readonly Color SecondaryText = new Color(0.71f, 0.72f, 0.70f, 1f);
-        private static readonly Color LockedText = new Color(1f, 0.66f, 0.55f, 1f);
-        private static readonly Color AllowedText = new Color(0.59f, 0.89f, 0.68f, 1f);
-        private static readonly Color LockedBackground = new Color(0.34f, 0.16f, 0.19f, 1f);
-        private static readonly Color AllowedBackground = new Color(0.16f, 0.31f, 0.25f, 1f);
-        private static readonly Color ButtonBackground = new Color(0.25f, 0.30f, 0.35f, 1f);
+        // Same base colors and button treatments as PartyHudPlugin.cs.
+        private static readonly Color PanelFrame = new Color(0.72f, 0.64f, 0.48f, 1f);
+        private static readonly Color PanelBackground = new Color(19f / 255f, 23f / 255f, 32f / 255f, 0.97f);
+        private static readonly Color PanelHeader = new Color(76f / 255f, 46f / 255f, 48f / 255f, 1f);
+        private static readonly Color Divider = new Color(0.71f, 0.63f, 0.48f, 0.38f);
+        private static readonly Color Heading = new Color(0.98f, 0.79f, 0.51f, 1f);
+        private static readonly Color TextColor = new Color(0.98f, 0.90f, 0.76f, 1f);
+        private static readonly Color MutedText = new Color(0.84f, 0.81f, 0.74f, 1f);
+        private static readonly Color Green = new Color(0.47f, 0.87f, 0.56f, 1f);
+        private static readonly Color Red = new Color(1f, 0.52f, 0.50f, 1f);
+        private static readonly Color ButtonFill = new Color(55f / 255f, 59f / 255f, 69f / 255f, 1f);
+        private static readonly Color ButtonActive = new Color(79f / 255f, 57f / 255f, 61f / 255f, 1f);
+        private static readonly Color ButtonOutline = new Color(178f / 255f, 153f / 255f, 95f / 255f, 1f);
 
         private readonly Action _onToggle;
         private readonly GameObject _canvasObject;
         private readonly Canvas _canvas;
+        private readonly GraphicRaycaster _raycaster;
         private readonly RectTransform _panelRoot;
+        private readonly List<Text> _labels = new List<Text>();
         private readonly Text _statusText;
-        private readonly Text _buttonText;
-        private readonly Image _statusBackground;
-        private readonly Image _buttonBackground;
+        private readonly Text _actionText;
+        private readonly Text _shortcutText;
+        private readonly Image _statusBar;
+        private readonly Image _buttonFill;
+        private readonly Image _buttonFillCenter;
+        private float _nextFontCheck;
+        private bool _gameFontApplied;
 
         public bool IsAlive => _canvasObject != null && _panelRoot != null;
 
         public BellControlPanel(Action onToggle)
         {
             _onToggle = onToggle ?? throw new ArgumentNullException(nameof(onToggle));
-
             _canvasObject = new GameObject("Stonewards Bell Control Canvas", typeof(RectTransform));
             UnityEngine.Object.DontDestroyOnLoad(_canvasObject);
 
@@ -63,57 +75,58 @@ namespace StonewardsBellControl
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
             scaler.matchWidthOrHeight = 0.5f;
 
-            _canvasObject.AddComponent<GraphicRaycaster>();
+            _raycaster = _canvasObject.AddComponent<GraphicRaycaster>();
+            _raycaster.enabled = false;
 
-            var font = GetUiFont();
+            Font font = FindGameFont();
+            _gameFontApplied = font != null;
             if (font == null)
-                throw new InvalidOperationException("Cannot find a Unity UI font.");
+                font = GetFallbackFont();
+            if (font == null)
+                throw new InvalidOperationException("Neither a Stonewards font nor a fallback UI font was found.");
 
-            _panelRoot = CreateRect("Bell Control", _canvasObject.transform,
-                0f, 0f, PanelWidth, PanelHeight);
-            AddImage(_panelRoot.gameObject, FrameColor, false);
+            _panelRoot = CreateRect("Bell Control Window", _canvasObject.transform,
+                0f, 0f, Width, Height);
 
-            var background = CreateRect("Background", _panelRoot, 2f, 2f,
-                PanelWidth - 4f, PanelHeight - 4f);
-            AddImage(background.gameObject, BackgroundColor, false);
+            // Stonewards windows have 7px diagonal steps, not square flat borders.
+            AddSolid("Background Top", _panelRoot, 7, 0, Width - 14, Height, PanelBackground);
+            AddSolid("Background Center", _panelRoot, 0, 7, Width, Height - 14, PanelBackground);
+            AddSolid("Header Top", _panelRoot, 7, 2, Width - 14, HeaderHeight - 2, PanelHeader);
+            AddSolid("Header Center", _panelRoot, 2, 7, Width - 4, HeaderHeight - 7, PanelHeader);
+            DrawWindowFrame(_panelRoot, Width, Height, HeaderHeight);
 
-            var header = CreateRect("Header", _panelRoot, 2f, 2f, PanelWidth - 4f, 29f);
-            AddImage(header.gameObject, HeaderColor, false);
+            AddText("Title", _panelRoot, font, "BELL CONTROL", 19, true,
+                Heading, TextAnchor.MiddleLeft, 14, 5, 190, 29);
+            AddText("Host", _panelRoot, font, "HOST", 12, true,
+                MutedText, TextAnchor.MiddleRight, 214, 8, 49, 23);
 
-            CreateText("Title", _panelRoot, font, "BELL CONTROL", 13, FontStyle.Bold,
-                PrimaryText, TextAnchor.MiddleLeft, 13f, 4f, 190f, 25f);
-            CreateText("Host Label", _panelRoot, font, "HOST", 10, FontStyle.Normal,
-                SecondaryText, TextAnchor.MiddleRight, 222f, 4f, 48f, 25f);
+            AddSolid("Status Accent", _panelRoot, 9, 49, 3, 26, ButtonOutline);
+            AddText("Guests", _panelRoot, font, "GUESTS", 16, true,
+                TextColor, TextAnchor.MiddleLeft, 19, 48, 115, 29);
+            _statusBar = AddSolid("Status Bar", _panelRoot, 177, 52, 3, 19, Red);
+            _statusText = AddText("Status", _panelRoot, font, "BLOCKED", 17, true,
+                Red, TextAnchor.MiddleRight, 185, 46, 78, 30);
+            AddSolid("Bottom Divider", _panelRoot, 12, 78, Width - 24, 1, Divider);
 
-            var divider = CreateRect("Divider", _panelRoot, 3f, 32f,
-                PanelWidth - 6f, 1f);
-            AddImage(divider.gameObject, DividerColor, false);
-
-            CreateText("Guests Label", _panelRoot, font, "Guests", 15, FontStyle.Normal,
-                PrimaryText, TextAnchor.MiddleLeft, 13f, 42f, 115f, 26f);
-
-            var state = CreateRect("Status", _panelRoot, 150f, 42f, 121f, 26f);
-            _statusBackground = AddImage(state.gameObject, LockedBackground, false);
-            _statusText = CreateText("Status Text", state, font, "BLOCKED",
-                12, FontStyle.Bold, LockedText, TextAnchor.MiddleCenter,
-                0f, 0f, 121f, 26f);
-
-            var action = CreateRect("Toggle Button", _panelRoot, 12f, 80f, 260f, 33f);
-            _buttonBackground = AddImage(action.gameObject, ButtonBackground, true);
+            // A Party HUD-shaped button, including 2px stepped golden border.
+            var action = CreateRect("Guest Permission Button", _panelRoot,
+                12, 83, Width - 24, 25);
+            _buttonFill = AddSolid("Button Top", action, 3, 0, Width - 30, 25, ButtonFill);
+            _buttonFillCenter = AddSolid("Button Center", action, 0, 3, Width - 24, 19, ButtonFill);
+            DrawButtonFrame(action, Width - 24, 25);
+            // Only the actual button background is a raycast target.
+            _buttonFill.raycastTarget = true;
             var button = action.gameObject.AddComponent<Button>();
-            button.targetGraphic = _buttonBackground;
-            button.transition = Selectable.Transition.ColorTint;
-            var colors = button.colors;
-            colors.normalColor = Color.white;
-            colors.highlightedColor = new Color(1.12f, 1.12f, 1.12f, 1f);
-            colors.pressedColor = new Color(0.80f, 0.80f, 0.80f, 1f);
-            colors.selectedColor = Color.white;
-            button.colors = colors;
-            button.onClick.AddListener(HandleButtonClick);
+            button.targetGraphic = _buttonFill;
+            // Do not let Unity's ColorTint state machine turn the dark fill white.
+            // The button color is determined by the actual allowed/blocked state.
+            button.transition = Selectable.Transition.None;
+            button.onClick.AddListener(OnButtonClicked);
 
-            _buttonText = CreateText("Button Text", action, font, "ALLOW GUESTS  [F8]",
-                12, FontStyle.Bold, PrimaryText, TextAnchor.MiddleCenter,
-                0f, 0f, 260f, 33f);
+            _actionText = AddText("Action", action, font, "ALLOW GUESTS", 15, true,
+                TextColor, TextAnchor.MiddleCenter, 9, 0, 202, 25);
+            _shortcutText = AddText("Shortcut", action, font, "F8", 12, true,
+                Heading, TextAnchor.MiddleCenter, 212, 0, 31, 25);
         }
 
         public void SetAllowed(bool allowed)
@@ -122,19 +135,43 @@ namespace StonewardsBellControl
                 return;
 
             _statusText.text = allowed ? "ALLOWED" : "BLOCKED";
-            _statusText.color = allowed ? AllowedText : LockedText;
-            _statusBackground.color = allowed ? AllowedBackground : LockedBackground;
-            _buttonText.text = allowed ? "BLOCK GUESTS  [F8]" : "ALLOW GUESTS  [F8]";
-            _buttonBackground.color = ButtonBackground;
+            _statusText.color = allowed ? Green : Red;
+            _statusBar.color = allowed ? Green : Red;
+            _actionText.text = allowed ? "BLOCK GUESTS" : "ALLOW GUESTS";
+            _shortcutText.text = "F8";
+            _buttonFill.color = allowed ? ButtonActive : ButtonFill;
+            _buttonFillCenter.color = allowed ? ButtonActive : ButtonFill;
         }
 
-        /// <summary>
-        /// Offsets are distances inward from the configured corner.
-        /// Decreasing VerticalOffset from a top anchor moves the panel up.
-        /// Keep the whole panel within the visible screen on resize.
-        /// </summary>
+        public void UpdateInteraction()
+        {
+            if (!IsAlive)
+                return;
+
+            // Do not capture game mouse input while the first-person cursor is locked.
+            _raycaster.enabled = Cursor.visible && Cursor.lockState == CursorLockMode.None;
+
+            // The native UI font may load after the plugin or scene initializes.
+            if (!_gameFontApplied && Time.unscaledTime >= _nextFontCheck)
+            {
+                _nextFontCheck = Time.unscaledTime + 4f;
+                Font font = FindGameFont();
+                if (font != null)
+                {
+                    for (int i = 0; i < _labels.Count; i++)
+                        if (_labels[i] != null)
+                        {
+                            _labels[i].font = font;
+                            _labels[i].fontStyle = FontStyle.Normal;
+                        }
+                    _gameFontApplied = true;
+                }
+            }
+        }
+
+        /// <summary>Margins are measured from the selected physical screen edge.</summary>
         public void UpdateLayout(PanelCorner corner, int horizontalOffset, int verticalOffset,
-            float requestedScale)
+            float requestedScale, bool avoidGoldCounter)
         {
             if (!IsAlive)
                 return;
@@ -142,97 +179,141 @@ namespace StonewardsBellControl
             float canvasScale = Mathf.Max(0.01f, _canvas.scaleFactor);
             float canvasWidth = Screen.width / canvasScale;
             float canvasHeight = Screen.height / canvasScale;
-
-            float scale = Mathf.Clamp(requestedScale, 0.65f, 1.60f);
-            float widthFit = (canvasWidth - 2f * EdgePadding) / PanelWidth;
-            float heightFit = (canvasHeight - 2f * EdgePadding) / PanelHeight;
-            scale = Mathf.Min(scale, Mathf.Max(0.1f, Mathf.Min(widthFit, heightFit)));
-            _panelRoot.localScale = Vector3.one * scale;
+            float panelScale = Mathf.Clamp(requestedScale, 0.65f, 1.6f);
+            panelScale = Mathf.Min(panelScale,
+                Mathf.Max(0.1f, (canvasWidth - EdgePadding * 2) / Width),
+                Mathf.Max(0.1f, (canvasHeight - EdgePadding * 2) / Height));
+            _panelRoot.localScale = Vector3.one * panelScale;
 
             bool right = corner == PanelCorner.TopRight || corner == PanelCorner.BottomRight;
             bool top = corner == PanelCorner.TopRight || corner == PanelCorner.TopLeft;
-
-            var anchor = new Vector2(right ? 1f : 0f, top ? 1f : 0f);
+            Vector2 anchor = new Vector2(right ? 1f : 0f, top ? 1f : 0f);
             _panelRoot.anchorMin = anchor;
             _panelRoot.anchorMax = anchor;
             _panelRoot.pivot = anchor;
 
-            float xMargin = Mathf.Clamp(horizontalOffset, EdgePadding,
-                Mathf.Max(EdgePadding, canvasWidth - PanelWidth * scale - EdgePadding));
-            float yMargin = Mathf.Clamp(verticalOffset, EdgePadding,
-                Mathf.Max(EdgePadding, canvasHeight - PanelHeight * scale - EdgePadding));
+            float x = Mathf.Clamp(Mathf.Max(0, horizontalOffset), EdgePadding,
+                Mathf.Max(EdgePadding, canvasWidth - Width * panelScale - EdgePadding));
 
-            _panelRoot.anchoredPosition = new Vector2(
-                right ? -xMargin : xMargin,
-                top ? -yMargin : yMargin);
+            float minTopPixels = top && right && avoidGoldCounter
+                ? GoldSafeTopPixels : EdgePadding * canvasScale;
+            float yPhysical = Mathf.Max(Mathf.Max(0, verticalOffset), minTopPixels);
+            float y = Mathf.Clamp(yPhysical / canvasScale, EdgePadding,
+                Mathf.Max(EdgePadding, canvasHeight - Height * panelScale - EdgePadding));
+
+            _panelRoot.anchoredPosition = new Vector2(right ? -x : x, top ? -y : y);
         }
 
-        private void HandleButtonClick()
+        private static void DrawWindowFrame(Transform parent, float w, float h, float hh)
         {
-            _onToggle();
+            const float e = 2f;
+            AddSolid("Frame Top", parent, 8, 0, w - 16, e, PanelFrame);
+            AddSolid("Top Left Step 1", parent, 5, 2, 3, e, PanelFrame);
+            AddSolid("Top Left Step 2", parent, 2, 5, 3, e, PanelFrame);
+            AddSolid("Left Border", parent, 0, 7, e, h - 14, PanelFrame);
+            AddSolid("Top Right Step 1", parent, w - 8, 2, 3, e, PanelFrame);
+            AddSolid("Top Right Step 2", parent, w - 5, 5, 3, e, PanelFrame);
+            AddSolid("Right Border", parent, w - e, 7, e, h - 14, PanelFrame);
+            AddSolid("Bottom Border", parent, 8, h - e, w - 16, e, PanelFrame);
+            AddSolid("Bottom Left Step 1", parent, 5, h - 4, 3, e, PanelFrame);
+            AddSolid("Bottom Left Step 2", parent, 2, h - 7, 3, e, PanelFrame);
+            AddSolid("Bottom Right Step 1", parent, w - 8, h - 4, 3, e, PanelFrame);
+            AddSolid("Bottom Right Step 2", parent, w - 5, h - 7, 3, e, PanelFrame);
+            AddSolid("Header Bottom Edge", parent, 2, hh - 1, w - 4, 1, PanelFrame);
+        }
+
+        private static void DrawButtonFrame(Transform parent, float w, float h)
+        {
+            const float e = 2f;
+            AddSolid("Button Top Frame", parent, 4, 0, w - 8, e, ButtonOutline);
+            AddSolid("Button Bottom Frame", parent, 4, h - e, w - 8, e, ButtonOutline);
+            AddSolid("Button Left Frame", parent, 0, 4, e, h - 8, ButtonOutline);
+            AddSolid("Button Right Frame", parent, w - e, 4, e, h - 8, ButtonOutline);
+            AddSolid("Button TL", parent, 2, 2, 2, e, ButtonOutline);
+            AddSolid("Button TR", parent, w - 4, 2, 2, e, ButtonOutline);
+            AddSolid("Button BL", parent, 2, h - 4, 2, e, ButtonOutline);
+            AddSolid("Button BR", parent, w - 4, h - 4, 2, e, ButtonOutline);
         }
 
         private static RectTransform CreateRect(string name, Transform parent,
-            float left, float top, float width, float height)
+            float x, float y, float w, float h)
         {
-            var go = new GameObject(name, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-
-            var rect = go.GetComponent<RectTransform>();
+            var obj = new GameObject(name, typeof(RectTransform));
+            obj.transform.SetParent(parent, false);
+            var rect = obj.GetComponent<RectTransform>();
             rect.anchorMin = new Vector2(0f, 1f);
             rect.anchorMax = new Vector2(0f, 1f);
             rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = new Vector2(left, -top);
-            rect.sizeDelta = new Vector2(width, height);
+            rect.anchoredPosition = new Vector2(x, -y);
+            rect.sizeDelta = new Vector2(w, h);
             return rect;
         }
 
-        private static Image AddImage(GameObject go, Color color, bool raycast)
+        private static Image AddSolid(string name, Transform parent,
+            float x, float y, float w, float h, Color color)
         {
-            var image = go.AddComponent<Image>();
-            image.color = color;
-            image.raycastTarget = raycast;
-            return image;
+            var img = CreateRect(name, parent, x, y, w, h).gameObject.AddComponent<Image>();
+            img.color = color;
+            img.raycastTarget = false;
+            return img;
         }
 
-        private static Text CreateText(string name, Transform parent, Font font,
-            string value, int fontSize, FontStyle fontStyle, Color color,
-            TextAnchor alignment, float x, float y, float width, float height)
+        private Text AddText(string name, Transform parent, Font font, string value,
+            int size, bool bold, Color color, TextAnchor align,
+            float x, float y, float w, float h)
         {
-            var rect = CreateRect(name, parent, x, y, width, height);
-            var label = rect.gameObject.AddComponent<Text>();
-            label.font = font;
-            label.text = value;
-            label.fontSize = fontSize;
-            label.fontStyle = fontStyle;
-            label.color = color;
-            label.alignment = alignment;
-            label.horizontalOverflow = HorizontalWrapMode.Overflow;
-            label.verticalOverflow = VerticalWrapMode.Truncate;
-            label.raycastTarget = false;
-            return label;
+            var text = CreateRect(name, parent, x, y, w, h).gameObject.AddComponent<Text>();
+            text.text = value;
+            text.font = font;
+            text.fontSize = size;
+            // Native Jersey10 fonts carry the intended weight in the font asset.
+            text.fontStyle = bold && !font.name.StartsWith("Jersey10", StringComparison.OrdinalIgnoreCase)
+                ? FontStyle.Bold : FontStyle.Normal;
+            text.color = color;
+            text.alignment = align;
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.raycastTarget = false;
+            _labels.Add(text);
+            return text;
         }
 
-        private static Font GetUiFont()
+        private static Font FindGameFont()
+        {
+            Font alternative = null;
+            foreach (var font in Resources.FindObjectsOfTypeAll<Font>())
+            {
+                if (font == null)
+                    continue;
+                if (font.name == "Jersey10-Regular")
+                    return font;
+                if (font.name == "Jersey10-Regular2")
+                    alternative = font;
+            }
+            return alternative;
+        }
+
+        private static Font GetFallbackFont()
         {
             try
             {
-                var builtin = Resources.GetBuiltinResource<Font>("Arial.ttf");
-                if (builtin != null)
-                    return builtin;
+                var font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+                if (font != null)
+                    return font;
             }
             catch (Exception)
             {
-                // Some Unity versions no longer ship the built-in Arial resource.
+                // Old/new Unity runtimes may not include the default resource.
             }
 
-            var loaded = Resources.FindObjectsOfTypeAll<Font>();
-            for (int i = 0; i < loaded.Length; i++)
-                if (loaded[i] != null)
-                    return loaded[i];
+            foreach (var font in Resources.FindObjectsOfTypeAll<Font>())
+                if (font != null)
+                    return font;
 
             return null;
         }
+
+        private void OnButtonClicked() => _onToggle();
 
         public void Dispose()
         {

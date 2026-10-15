@@ -13,7 +13,7 @@ namespace StonewardsBellControl
     {
         public const string PluginGuid = "dev.stonewards.bellcontrol";
         public const string PluginName = "Stonewards Bell Control";
-        public const string PluginVersion = "0.2.0";
+        public const string PluginVersion = "0.2.1";
 
         internal static bool GuestsMayRing { get; private set; }
 
@@ -21,6 +21,7 @@ namespace StonewardsBellControl
         private ConfigEntry<int> _horizontalOffset;
         private ConfigEntry<int> _verticalOffset;
         private ConfigEntry<float> _scale;
+        private ConfigEntry<bool> _avoidGoldCounter;
 
         private Harmony _harmony;
         private BellControlPanel _panel;
@@ -35,8 +36,10 @@ namespace StonewardsBellControl
                 "Corner used to position the Bell Control panel.");
             _horizontalOffset = Config.Bind("Appearance", "HorizontalOffset", 14,
                 "Distance inward from the selected left/right screen edge, in reference-resolution units.");
-            _verticalOffset = Config.Bind("Appearance", "VerticalOffset", 80,
-                "Distance inward from the selected top/bottom screen edge. Smaller values move the panel closer to that edge.");
+            _verticalOffset = Config.Bind("Appearance", "VerticalOffset", 132,
+                "Distance inward from the selected top/bottom screen edge, in actual screen pixels.");
+            _avoidGoldCounter = Config.Bind("Appearance", "AvoidGoldCounter", true,
+                "Keep the Bell Control panel below the native gold counter when anchored TopRight.");
             _scale = Config.Bind("Appearance", "Scale", 1.0f,
                 new ConfigDescription("Panel scale (0.65 - 1.60).",
                     new AcceptableValueRange<float>(0.65f, 1.60f)));
@@ -85,7 +88,8 @@ namespace StonewardsBellControl
             }
 
             _panel.UpdateLayout(_anchor.Value, _horizontalOffset.Value,
-                _verticalOffset.Value, _scale.Value);
+                _verticalOffset.Value, _scale.Value, _avoidGoldCounter.Value);
+            _panel.UpdateInteraction();
         }
 
         private void ToggleGuests()
