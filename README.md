@@ -9,7 +9,9 @@
 
 - 🔒 **Guests blocked by default** when a host session starts.
 - 👑 **The host can always ring** the bell.
-- 🔓 **F8** toggles guest permissions; a host-only **Allow / Block** button appears in the upper-right corner.
+- 🔓 **F8** toggles guest permissions; a host-only **Allow / Block** button appears in a native Unity Canvas.
+- 🎨 Party HUD-inspired colors: dark background, muted gold frame and burgundy header.
+- 📐 Configurable **Anchor**, **HorizontalOffset**, **VerticalOffset** and **Scale** in the BepInEx config.
 - 🛡️ **Server-side enforcement:** guest ring commands are ignored when blocked, even if guests do not have the plugin.
 - 🔄 **Resets on each hosted session:** returning to the menu / rehosting restores the blocked setting.
 - ⏱️ The regular countdown is not intentionally modified.
@@ -21,7 +23,7 @@
 - Stonewards 0.2.3 on Windows
 - BepInEx **5** installed in the game directory **or in the active r2modman profile**
 - .NET SDK supporting `netstandard2.1` (required to *build*; not required to run a built DLL)
-- Locally installed game assemblies (`Stonewards_Data/Managed`) and BepInEx core DLLs (referenced during compilation)
+- Locally installed game assemblies (`Stonewards_Data/Managed`) including `UnityEngine.UI.dll`, `UnityEngine.UIModule.dll` and `UnityEngine.TextRenderingModule.dll`, plus BepInEx core DLLs
 
 This repository does **not** contain or distribute copyrighted game DLLs.
 
@@ -42,6 +44,29 @@ powershell -ExecutionPolicy Bypass -File .\build-and-install.ps1 `
 ```
 
 Then launch the game **through the same r2modman profile**.
+
+## Panel appearance and positioning
+
+The new UI uses a real Unity Canvas (uGUI), not `OnGUI`. It is visible only while hosting a session, and is placed in the **upper-right** corner by default so it does not overlap Party HUD on the left.
+
+Open the generated `BepInEx/config/dev.stonewards.bellcontrol.cfg` in your active r2modman profile:
+
+```ini
+[Appearance]
+Anchor = TopRight
+HorizontalOffset = 14
+VerticalOffset = 80
+Scale = 1
+```
+
+- `Anchor`: `TopRight`, `TopLeft`, `BottomRight` or `BottomLeft`.
+- `HorizontalOffset`: distance **inward** from the selected left/right edge.
+- `VerticalOffset`: distance **inward** from the selected top/bottom edge. For `TopRight` or `TopLeft`, **smaller moves the panel up**; larger moves it down.
+- `Scale`: from `0.65` to `1.60`. The panel is also reduced if needed to stay on-screen.
+
+Changes are picked up while the game is running when BepInEx updates its configuration; restarting the game reliably applies manual file edits. Offsets are clamped only to keep the panel on-screen.
+
+**Controls:** F8 always works for the host. The on-screen button can be clicked when the game cursor is available.
 
 To compile without installing, omit `-ProfileDir` when BepInEx lives inside the game directory, or use `-NoInstall` with `-ProfileDir`. You can also set `-BepInExDir` explicitly when dependencies are in a different directory.
 
@@ -71,6 +96,8 @@ With guest access blocked, those calls are ignored. Host-local calls use the gam
 ## Known limitations
 
 - Guests still see vanilla bell interaction text and progress UI, but their ring request will be denied while blocked.
+- The host's on-screen button requires an active UI cursor (F8 works regardless of cursor lock).
+- Native uGUI dependencies must be present in the installed game.
 - If guests began an animation while allowed, locking them out mid-interaction may leave a brief visual mismatch. The final ring request remains blocked.
 - This does **not** prevent other modded clients or game mechanics from invoking unrelated wave-start logic.
 - BepInEx may be detected by the game; modding can affect leaderboard eligibility. Review the game's current rules before using mods for online play.
@@ -80,7 +107,7 @@ See [multiplayer test plan](docs/TESTING.md) before publishing a release.
 
 ## Project status
 
-**v0.1.0 — experimental source release.** No compiled release asset is included. If the game updates, inspect the new assembly before claiming compatibility.
+**v0.2.0 — experimental Canvas UI update.** No compiled release asset is included. If the game updates, inspect the new assembly before claiming compatibility.
 
 ## License
 

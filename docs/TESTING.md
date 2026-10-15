@@ -12,7 +12,12 @@ The checks below are **not completed tests**. They should be performed before pu
 ## Checklist
 
 - [ ] Host boots without a plugin load or Harmony patch error.
-- [ ] UI panel is visible only to host; F8 changes `BLOCKED` / `ALLOWED`.
+- [ ] Native Canvas panel is visible only to host; F8 changes `BLOCKED` / `ALLOWED`.
+- [ ] Panel uses Party HUD-inspired colors and button changes state with F8.
+- [ ] On-screen button toggles state with cursor visible, without intercepting other UI clicks.
+- [ ] For TopRight anchor, lowering VerticalOffset moves the panel up.
+- [ ] Panel remains on-screen when changing resolution, anchor and scale.
+- [ ] Entering/leaving hosted sessions creates/destroys the panel without duplicates.
 - [ ] With guests blocked, guest holds the bell: wave timer is not shortened.
 - [ ] With guests blocked, host rings: bell works as in the unmodded game.
 - [ ] After F8 allows guests, a guest can ring and start the wave normally.
