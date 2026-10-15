@@ -56,7 +56,7 @@ Open the generated `BepInEx/config/dev.stonewards.bellcontrol.cfg` in your activ
 [Appearance]
 Anchor = TopRight
 HorizontalOffset = 14
-VerticalOffset = 132
+VerticalOffset = 200
 AvoidGoldCounter = true
 Scale = 1
 ```
@@ -64,7 +64,7 @@ Scale = 1
 - `Anchor`: `TopRight`, `TopLeft`, `BottomRight` or `BottomLeft`.
 - `HorizontalOffset`: distance **inward** from the selected left/right edge.
 - `VerticalOffset`: physical pixel distance **inward** from the selected top/bottom edge. For `TopRight` or `TopLeft`, **smaller moves the panel up**; larger moves it down.
-- `AvoidGoldCounter`: when `true` and `Anchor = TopRight`, the panel's top edge is never closer than **132 physical pixels** to the screen's top, so the native gold counter remains visible. Older profiles with `VerticalOffset = 80` are automatically protected. Disable to position the panel closer to the top edge.
+- `AvoidGoldCounter`: when `true` and `Anchor = TopRight`, the panel's top edge is never closer than **200 physical pixels** to the screen's top, so the native gold counter remains visible. Older profiles with `VerticalOffset = 80` are automatically protected. Disable to position the panel closer to the top edge.
 - `Scale`: from `0.65` to `1.60`. The panel is also reduced if needed to stay on-screen.
 
 Changes are picked up while the game is running when BepInEx updates its configuration; restarting the game reliably applies manual file edits. Offsets are clamped only to keep the panel on-screen.
@@ -110,7 +110,7 @@ See [multiplayer test plan](docs/TESTING.md) before publishing a release.
 
 ## Project status
 
-**v0.2.1 — experimental Party HUD-style Canvas UI refinement.** No compiled release asset is included. If the game updates, inspect the new assembly before claiming compatibility.
+**v0.2.2 — experimental gold-HUD spacing refinement.** No compiled release asset is included. If the game updates, inspect the new assembly before claiming compatibility.
 
 ## License
 

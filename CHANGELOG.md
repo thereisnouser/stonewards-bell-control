@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2] - Unreleased (experimental)
+
+- Increased the minimum protected top spacing for the native gold HUD from 132px to 200px after a 2048x1152 screenshot still showed overlap.
+- Updated the default vertical offset to 200px without overriding custom offsets; protection remains active whenever AvoidGoldCounter is true.
+
+> Screenshot-driven layout correction; requires in-game verification.
+
 ## [0.2.1] - Unreleased (experimental)
 
 - Replaced the flat rectangular Canvas skin with pixel-stepped game-style frames and outlined button matching Party HUD.

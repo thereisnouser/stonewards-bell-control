@@ -24,9 +24,10 @@ namespace StonewardsBellControl
         private const float Height = 112f;
         private const float HeaderHeight = 38f;
         private const float EdgePadding = 6f;
-        // Gold HUD occupies the upper-right edge. Reserve physical pixels so
-        // existing VerticalOffset=80 configurations also cannot obscure it.
-        private const float GoldSafeTopPixels = 132f;
+        // The vanilla gold display is taller than its visible numeric row:
+        // reserve enough space for its whole backing panel and an extra gap.
+        // This is a minimum independent of old saved VerticalOffset values.
+        private const float GoldSafeTopPixels = 200f;
 
         // Same base colors and button treatments as PartyHudPlugin.cs.
         private static readonly Color PanelFrame = new Color(0.72f, 0.64f, 0.48f, 1f);

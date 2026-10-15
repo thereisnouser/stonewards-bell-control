@@ -13,7 +13,7 @@ namespace StonewardsBellControl
     {
         public const string PluginGuid = "dev.stonewards.bellcontrol";
         public const string PluginName = "Stonewards Bell Control";
-        public const string PluginVersion = "0.2.1";
+        public const string PluginVersion = "0.2.2";
 
         internal static bool GuestsMayRing { get; private set; }
 
@@ -36,7 +36,7 @@ namespace StonewardsBellControl
                 "Corner used to position the Bell Control panel.");
             _horizontalOffset = Config.Bind("Appearance", "HorizontalOffset", 14,
                 "Distance inward from the selected left/right screen edge, in reference-resolution units.");
-            _verticalOffset = Config.Bind("Appearance", "VerticalOffset", 132,
+            _verticalOffset = Config.Bind("Appearance", "VerticalOffset", 200,
                 "Distance inward from the selected top/bottom screen edge, in actual screen pixels.");
             _avoidGoldCounter = Config.Bind("Appearance", "AvoidGoldCounter", true,
                 "Keep the Bell Control panel below the native gold counter when anchored TopRight.");
