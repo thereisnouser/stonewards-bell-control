@@ -1,0 +1,23 @@
+# .NET build artifacts
+**/bin/
+**/obj/
+*.user
+*.suo
+*.pdb
+
+# IDE / OS
+.vs/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Do not commit proprietary game or BepInEx binaries
+*.dll
+*.exe
+*.zip
+
+# Local packaging / diagnostics
+dist/
+logs/
+*.log
