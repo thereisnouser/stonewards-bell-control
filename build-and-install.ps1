@@ -42,6 +42,7 @@ $bepCore = Join-Path $bepRoot 'core'
 $required = @(
     (Join-Path $managed 'Assembly-CSharp.dll'),
     (Join-Path $managed 'Mirror.dll'),
+    (Join-Path $managed 'UnityEngine.dll'),
     (Join-Path $managed 'UnityEngine.CoreModule.dll'),
     (Join-Path $managed 'UnityEngine.IMGUIModule.dll'),
     (Join-Path $managed 'Unity.InputSystem.dll'),
