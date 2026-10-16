@@ -13,7 +13,7 @@ namespace StonewardsBellControl
     {
         public const string PluginGuid = "dev.stonewards.bellcontrol";
         public const string PluginName = "Stonewards Bell Control";
-        public const string PluginVersion = "0.2.2";
+        public const string PluginVersion = "0.2.3";
 
         internal static bool GuestsMayRing { get; private set; }
 
@@ -22,6 +22,7 @@ namespace StonewardsBellControl
         private ConfigEntry<int> _verticalOffset;
         private ConfigEntry<float> _scale;
         private ConfigEntry<bool> _avoidGoldCounter;
+        private ConfigEntry<int> _layoutRevision;
 
         private Harmony _harmony;
         private BellControlPanel _panel;
@@ -32,11 +33,11 @@ namespace StonewardsBellControl
 
         private void Awake()
         {
-            _anchor = Config.Bind("Appearance", "Anchor", PanelCorner.TopRight,
+            _anchor = Config.Bind("Appearance", "Anchor", PanelCorner.BottomLeft,
                 "Corner used to position the Bell Control panel.");
             _horizontalOffset = Config.Bind("Appearance", "HorizontalOffset", 14,
                 "Distance inward from the selected left/right screen edge, in reference-resolution units.");
-            _verticalOffset = Config.Bind("Appearance", "VerticalOffset", 200,
+            _verticalOffset = Config.Bind("Appearance", "VerticalOffset", 146,
                 "Distance inward from the selected top/bottom screen edge, in actual screen pixels.");
             _avoidGoldCounter = Config.Bind("Appearance", "AvoidGoldCounter", true,
                 "Keep the Bell Control panel below the native gold counter when anchored TopRight.");
@@ -44,10 +45,38 @@ namespace StonewardsBellControl
                 new ConfigDescription("Panel scale (0.65 - 1.60).",
                     new AcceptableValueRange<float>(0.65f, 1.60f)));
 
+            // Upgrade only the historical untouched TopRight defaults. Preserve
+            // manual positions so a user-selected layout is never overwritten.
+            _layoutRevision = Config.Bind("Appearance", "LayoutRevision", 0,
+                "Internal layout migration version. Leave unchanged.");
+            MigrateLayoutIfNeeded();
+
             GuestsMayRing = false;
             _harmony = new Harmony(PluginGuid);
             _harmony.PatchAll(typeof(BellControlPlugin).Assembly);
             Logger.LogInfo("Bell Control loaded. Host: F8 toggles guest access to the bell.");
+        }
+
+        private void MigrateLayoutIfNeeded()
+        {
+            if (_layoutRevision.Value >= 1)
+                return;
+
+            // Previous builds used 80, 132 and 200px as their default
+            // top-right inset. Move only those known presets, not custom layouts.
+            if (_anchor.Value == PanelCorner.TopRight &&
+                _horizontalOffset.Value == 14 &&
+                (_verticalOffset.Value == 80 ||
+                 _verticalOffset.Value == 132 ||
+                 _verticalOffset.Value == 200))
+            {
+                _anchor.Value = PanelCorner.BottomLeft;
+                _verticalOffset.Value = 146;
+                Logger.LogInfo("Moved default Bell Control panel to BottomLeft to avoid the daily quest tracker.");
+            }
+
+            _layoutRevision.Value = 1;
+            Config.Save();
         }
 
         private void Update()

@@ -3,7 +3,7 @@
 **Host-only bell permissions for Stonewards.** A small [BepInEx 5](https://github.com/BepInEx/BepInEx) + [Harmony](https://github.com/pardeike/Harmony) plugin that lets the host decide when other players are allowed to ring the wave bell.
 
 > [!IMPORTANT]
-> **Experimental — not yet tested in a live game.** The implementation was developed against the supplied `Assembly-CSharp.dll` from **Stonewards 0.2.3**. It has not been compiled against a full game installation or multiplayer-tested yet. Please test it in a private session before relying on it.
+> **Experimental.** Developed for **Stonewards 0.2.3**. The Canvas UI has been built and shown in user gameplay screenshots, but the new bottom-left layout and full guest/host multiplayer regression test still need confirmation before a binary release.
 
 ## Features
 
@@ -11,7 +11,7 @@
 - 👑 **The host can always ring** the bell.
 - 🔓 **F8** toggles guest permissions; a host-only **Allow / Block** button appears in a native Unity Canvas.
 - 🎨 Party HUD-style stepped frame, graphite action button, muted gold and burgundy palette, and Stonewards' native Jersey10 font where available.
-- 💰 Automatically reserves the upper-right area used by the vanilla gold counter.
+- 🧭 Defaults to the bottom-left, above the Emote prompt, away from Party HUD and the top-right daily quest/gold panels. Gold-counter protection remains available for manually selected TopRight layouts.
 - 📐 Configurable **Anchor**, **HorizontalOffset**, **VerticalOffset** and **Scale** in the BepInEx config.
 - 🛡️ **Server-side enforcement:** guest ring commands are ignored when blocked, even if guests do not have the plugin.
 - 🔄 **Resets on each hosted session:** returning to the menu / rehosting restores the blocked setting.
@@ -35,7 +35,7 @@ Run PowerShell from the cloned repository directory:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build-and-install.ps1 `
   -GameDir "F:\Steam\steamapps\common\Stonewards" `
-  -ProfileDir "C:\Users\user\AppData\Roaming\r2modmanPlus-local\Stonewards\profiles\stonewards"
+  -ProfileDir "C:\Users\user\AppData\Roaming\r2modmanPlus-local\Stonewards\profiles\stonewards-bell-control"
 ```
 
 **Adjust both paths to your installation and active r2modman profile.** The script finds Unity game DLLs in `GameDir\Stonewards_Data\Managed`, BepInEx assemblies in `ProfileDir\BepInEx\core`, builds the plugin, and installs it to:
@@ -48,26 +48,26 @@ Then launch the game **through the same r2modman profile**.
 
 ## Panel appearance and positioning
 
-The new UI uses a real Unity Canvas (uGUI), not `OnGUI`. It is visible only while hosting a session, and is placed in the **upper-right** corner by default so it does not overlap Party HUD on the left.
+The new UI uses a real Unity Canvas (uGUI), not `OnGUI`. It is visible only while hosting a session, and is placed in the **bottom-left** corner by default, above Emote. The top-left is reserved for Party HUD, and the top-right for gold and Daily Quest Tracker.
 
 Open the generated `BepInEx/config/dev.stonewards.bellcontrol.cfg` in your active r2modman profile:
 
 ```ini
 [Appearance]
-Anchor = TopRight
+Anchor = BottomLeft
 HorizontalOffset = 14
-VerticalOffset = 200
+VerticalOffset = 146
 AvoidGoldCounter = true
 Scale = 1
 ```
 
 - `Anchor`: `TopRight`, `TopLeft`, `BottomRight` or `BottomLeft`.
 - `HorizontalOffset`: distance **inward** from the selected left/right edge.
-- `VerticalOffset`: physical pixel distance **inward** from the selected top/bottom edge. For `TopRight` or `TopLeft`, **smaller moves the panel up**; larger moves it down.
+- `VerticalOffset`: physical pixel distance **inward** from the selected top/bottom edge. For top anchors, **smaller moves the panel up**; for bottom anchors, **larger moves it up**.
 - `AvoidGoldCounter`: when `true` and `Anchor = TopRight`, the panel's top edge is never closer than **200 physical pixels** to the screen's top, so the native gold counter remains visible. Older profiles with `VerticalOffset = 80` are automatically protected. Disable to position the panel closer to the top edge.
 - `Scale`: from `0.65` to `1.60`. The panel is also reduced if needed to stay on-screen.
 
-Changes are picked up while the game is running when BepInEx updates its configuration; restarting the game reliably applies manual file edits. Offsets are clamped only to keep the panel on-screen.
+An existing profile is migrated once from the former default TopRight preset (horizontal offset 14; vertical offset 80, 132 or 200) to BottomLeft. Custom offsets and other anchors are preserved. The internal `LayoutRevision` option tracks this migration; do not edit it. Changes are picked up while the game is running when BepInEx updates its configuration; restarting the game reliably applies manual file edits. Offsets are clamped only to keep the panel on-screen.
 
 **Controls:** F8 always works for the host. The on-screen button can be clicked when the game cursor is available.
 
@@ -110,7 +110,7 @@ See [multiplayer test plan](docs/TESTING.md) before publishing a release.
 
 ## Project status
 
-**v0.2.2 — experimental gold-HUD spacing refinement.** No compiled release asset is included. If the game updates, inspect the new assembly before claiming compatibility.
+**v0.2.3 — experimental layout improvement.** No compiled release asset is included. If the game updates, inspect the new assembly before claiming compatibility.
 
 ## License
 

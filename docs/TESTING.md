@@ -14,6 +14,9 @@ The checks below are **not completed tests**. They should be performed before pu
 - [ ] Host boots without a plugin load or Harmony patch error.
 - [ ] Native Canvas panel is visible only to host; F8 changes `BLOCKED` / `ALLOWED`.
 - [ ] Panel uses Party HUD's stepped border, gold button outline and native Jersey10 typeface.
+- [ ] Fresh profile: Bell Control defaults to BottomLeft (14px from left, 146px above bottom) and does not obscure Emote, Party HUD, gold or Daily Quest Tracker.
+- [ ] Existing old-default TopRight profile migrates to BottomLeft on first start, without manual config editing.
+- [ ] User-customized anchor or offsets are preserved during the one-time migration.
 - [ ] With `Anchor = TopRight`, `VerticalOffset = 80`, and `AvoidGoldCounter = true`, the gold count and its full backing panel remain visible, with a clear gap below it.
 - [ ] With `AvoidGoldCounter = false`, the panel can be positioned closer to the top with VerticalOffset.
 - [ ] With the cursor locked, the new Canvas does not intercept mouse-looking or gameplay interactions.

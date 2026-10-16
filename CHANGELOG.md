@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.3] - Unreleased (experimental)
+
+- Relocated the default host panel to BottomLeft (14 horizontal, 146px bottom margin) to avoid the top-right Daily Quest Tracker, gold counter and the top-left Party HUD.
+- Added a one-time migration for previous default TopRight coordinates while preserving custom positions.
+- Kept all four configurable anchors, old gold-counter protection, visual style and the F8/server enforcement logic unchanged.
+
+> Layout change based on user screenshots; verify the new location in game before release.
+
 ## [0.2.2] - Unreleased (experimental)
 
 - Increased the minimum protected top spacing for the native gold HUD from 132px to 200px after a 2048x1152 screenshot still showed overlap.
