@@ -3,7 +3,7 @@
 **Host-only bell permissions for Stonewards.** A small [BepInEx 5](https://github.com/BepInEx/BepInEx) + [Harmony](https://github.com/pardeike/Harmony) plugin that lets the host decide when other players are allowed to ring the wave bell.
 
 > [!IMPORTANT]
-> **Experimental.** Developed for **Stonewards 0.2.3**. Earlier Canvas layouts were shown in user gameplay screenshots. The single-row UI and Emote-relative positioning still need in-game confirmation, as does multiplayer regression testing.
+> **Experimental.** Developed for **Stonewards 0.2.3**. The fixed single-row position above Emote still needs in-game confirmation at different resolutions, as does multiplayer regression testing.
 
 ## Features
 
@@ -11,7 +11,7 @@
 - 👑 **The host can always ring** the bell.
 - 🔓 **F8** toggles guest permissions; a host-only **Allow / Block** button appears in a native Unity Canvas.
 - 🎨 Party HUD-style stepped frame, graphite action button, muted gold and burgundy palette, and Stonewards' native Jersey10 font where available.
-- 🧭 **Follows the in-game Emote prompt** near the lower-left corner using its live UI Toolkit bounds, with a small configurable gap. Falls back to BottomLeft when Emote cannot be detected. This stays clear of Party HUD and the top-right gold/daily quest panels.
+- 🧭 **Instant fixed default position above Emote**, near the lower-left corner, with no late repositioning. Optional UI Toolkit-based `FollowEmote` mode can be enabled manually if desired. The default stays clear of Party HUD and the top-right gold/daily quest panels.
 - 📏 Single-row control: **248 × 42** reference UI units, reading `BELL · BLOCKED/ALLOWED · ALLOW/BLOCK [F8]`. No stacked title or guests row.
 - 📐 Configurable **FollowEmote**, **EmoteGap**, **EmoteHorizontalAdjust**, **Anchor**, edge offsets, and **Scale** in the BepInEx config.
 - 🛡️ **Server-side enforcement:** guest ring commands are ignored when blocked, even if guests do not have the plugin.
@@ -49,23 +49,23 @@ Then launch the game **through the same r2modman profile**.
 
 ## Panel appearance and positioning
 
-The UI uses a real Unity Canvas (uGUI), not `OnGUI`. It is visible only while hosting a session. On the default BottomLeft anchor it looks up the **actual Emote shortcut** in the live UI Toolkit hierarchy and positions itself immediately above that element, with a gap. When the game rescales or moves the HUD, Bell Control follows it. The upper-left remains available to Party HUD, and the upper-right to gold and Daily Quest Tracker. If Emote is not found (e.g., UI changed after an update), the panel uses the safe BottomLeft offsets instead.
+The UI uses a real Unity Canvas (uGUI), not `OnGUI`, and appears only for the host. By default, it uses **fixed BottomLeft offsets** corresponding to the spot immediately above the in-game Emote shortcut, without scanning the HUD or visibly moving after startup. The upper-left remains available to Party HUD; the upper-right stays clear for gold and Daily Quest Tracker. For players who prefer following Emote dynamically when the HUD scale or layout changes, `FollowEmote = true` enables the optional UI Toolkit tracker; if that tracker cannot identify Emote, the panel falls back to the fixed offsets.
 
 Open the generated `BepInEx/config/dev.stonewards.bellcontrol.cfg` in your active r2modman profile:
 
 ```ini
 [Appearance]
 Anchor = BottomLeft
-FollowEmote = true
+FollowEmote = false
 EmoteGap = 12
 EmoteHorizontalAdjust = 0
-HorizontalOffset = 14
-VerticalOffset = 92
+HorizontalOffset = 26
+VerticalOffset = 80
 AvoidGoldCounter = true
 Scale = 1
 ```
 
-- `FollowEmote`: when `true` and the anchor is `BottomLeft`, follow the actual Emote HUD shortcut, using its screen coordinates.
+- `FollowEmote`: **false by default**, keeping the panel immediately visible in a stable fixed position. Set to `true` to track the actual Emote HUD shortcut when using the `BottomLeft` anchor.
 - `EmoteGap`: physical pixel gap between the top of Emote and the bottom of Bell Control.
 - `EmoteHorizontalAdjust`: physical pixel adjustment relative to the Emote button's left edge, if needed.
 - `Anchor`: `TopRight`, `TopLeft`, `BottomRight` or `BottomLeft`. Other corners always use manual edge offsets.
@@ -74,7 +74,7 @@ Scale = 1
 - `AvoidGoldCounter`: when `true` and `Anchor = TopRight`, the panel's top edge is never closer than **200 physical pixels** to the screen's top, so the native gold counter remains visible. Older profiles with `VerticalOffset = 80` are automatically protected. Disable to position the panel closer to the top edge.
 - `Scale`: from `0.65` to `1.60`. The panel is also reduced if needed to stay on-screen.
 
-Existing old default TopRight positions (offset 14 with vertical offset 80, 132 or 200) and the previous default BottomLeft position (offset 14, vertical 146) are migrated once to the new BottomLeft fallback offset (92). Custom anchors and nonstandard offsets are preserved. The internal `LayoutRevision` option tracks this migration; do not edit it. Changes are picked up while the game is running when BepInEx updates its configuration; restarting the game reliably applies manual file edits. Offsets are clamped only to keep the panel on-screen.
+Untouched old preset positions from previous releases are migrated forward. For the standard 0.2.5 profile (`BottomLeft`, horizontal 14, vertical 92, `FollowEmote = true`, `EmoteGap = 12`, `EmoteHorizontalAdjust = 0`), the plugin switches to fixed horizontal 26 / vertical 80 and disables `FollowEmote`. Custom anchors, offsets and Emote adjustments remain unchanged. The internal `LayoutRevision` option tracks this migration; do not edit it. Changes are picked up while the game is running when BepInEx updates its configuration; restarting the game reliably applies manual file edits. Offsets are clamped only to keep the panel on-screen.
 
 **Controls:** F8 always works for the host. The on-screen button can be clicked when the game cursor is available.
 
@@ -117,7 +117,7 @@ See [multiplayer test plan](docs/TESTING.md) before publishing a release.
 
 ## Project status
 
-**v0.2.5 — experimental single-row Emote-following layout.** No compiled release asset is included. If the game updates, inspect the new assembly before claiming compatibility.
+**v0.2.6 — experimental fixed-position single-row layout.** No compiled release asset is included. If the game updates, inspect the new assembly before claiming compatibility.
 
 ## License
 

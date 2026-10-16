@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.6] - Unreleased (experimental)
+
+- Made the compact single-row panel appear immediately at a fixed BottomLeft position above Emote (horizontal offset 26, vertical offset 80).
+- Changed FollowEmote's default to false, avoiding late UI Toolkit discovery and visible movement.
+- Added one-time migration for the prior unmodified 0.2.5 preset; optional Emote-following mode remains available.
+- Preserved F8, click-to-toggle, appearance, and host-side bell enforcement.
+
+> Fixed placement requires a visual check on supported resolutions.
+
 ## [0.2.5] - Unreleased (experimental)
 
 - Replaced the three-row 222×88 panel with a single-row 248×42 control: BELL, colored guest permission, and an outlined ALLOW/BLOCK button with F8 hint.

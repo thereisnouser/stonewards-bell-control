@@ -13,7 +13,7 @@ namespace StonewardsBellControl
     {
         public const string PluginGuid = "dev.stonewards.bellcontrol";
         public const string PluginName = "Stonewards Bell Control";
-        public const string PluginVersion = "0.2.5";
+        public const string PluginVersion = "0.2.6";
 
         internal static bool GuestsMayRing { get; private set; }
 
@@ -39,14 +39,14 @@ namespace StonewardsBellControl
         {
             _anchor = Config.Bind("Appearance", "Anchor", PanelCorner.BottomLeft,
                 "Corner used to position the Bell Control panel.");
-            _horizontalOffset = Config.Bind("Appearance", "HorizontalOffset", 14,
+            _horizontalOffset = Config.Bind("Appearance", "HorizontalOffset", 26,
                 "Distance inward from the selected left/right screen edge, in reference-resolution units.");
-            _verticalOffset = Config.Bind("Appearance", "VerticalOffset", 92,
+            _verticalOffset = Config.Bind("Appearance", "VerticalOffset", 80,
                 "Distance inward from the selected top/bottom screen edge, in actual screen pixels.");
             _avoidGoldCounter = Config.Bind("Appearance", "AvoidGoldCounter", true,
                 "Keep the Bell Control panel below the native gold counter when anchored TopRight.");
-            _followEmote = Config.Bind("Appearance", "FollowEmote", true,
-                "Position the panel above the actual Emote HUD shortcut while anchored BottomLeft.");
+            _followEmote = Config.Bind("Appearance", "FollowEmote", false,
+                "Optional: follow the actual Emote HUD; disabled by default for instant, stable positioning.");
             _emoteGap = Config.Bind("Appearance", "EmoteGap", 12,
                 "Gap in physical pixels between Emote and the Bell Control panel.");
             _emoteHorizontalAdjust = Config.Bind("Appearance", "EmoteHorizontalAdjust", 0,
@@ -71,29 +71,48 @@ namespace StonewardsBellControl
 
         private void MigrateLayoutIfNeeded()
         {
-            if (_layoutRevision.Value >= 2)
+            if (_layoutRevision.Value >= 3)
                 return;
 
-            // Migrate only historical defaults. User-selected anchors and
-            // custom offsets are preserved; FollowEmote can be disabled.
-            if (_anchor.Value == PanelCorner.TopRight &&
-                _horizontalOffset.Value == 14 &&
-                (_verticalOffset.Value == 80 ||
-                 _verticalOffset.Value == 132 ||
-                 _verticalOffset.Value == 200))
+            // Old TopRight defaults and the original tall BottomLeft layout
+            // were never deliberate custom coordinates: migrate them first.
+            if (_layoutRevision.Value < 2)
             {
-                _anchor.Value = PanelCorner.BottomLeft;
-                _verticalOffset.Value = 92;
-                Logger.LogInfo("Moved default Bell Control layout above Emote.");
-            }
-            else if (_anchor.Value == PanelCorner.BottomLeft &&
-                _horizontalOffset.Value == 14 && _verticalOffset.Value == 146)
-            {
-                _verticalOffset.Value = 92;
-                Logger.LogInfo("Updated bottom-left fallback offset for compact panel.");
+                if (_anchor.Value == PanelCorner.TopRight &&
+                    _horizontalOffset.Value == 14 &&
+                    (_verticalOffset.Value == 80 ||
+                     _verticalOffset.Value == 132 ||
+                     _verticalOffset.Value == 200))
+                {
+                    _anchor.Value = PanelCorner.BottomLeft;
+                    _verticalOffset.Value = 92;
+                }
+                else if (_anchor.Value == PanelCorner.BottomLeft &&
+                    _horizontalOffset.Value == 14 &&
+                    _verticalOffset.Value == 146)
+                {
+                    _verticalOffset.Value = 92;
+                }
             }
 
-            _layoutRevision.Value = 2;
+            // 0.2.4-0.2.5 followed Emote by default, which caused a visible
+            // jump once the game created its UI Toolkit HUD. Replace only the
+            // untouched legacy preset with immediate fixed positioning.
+            // Customized anchors, offsets or Emote options remain unchanged.
+            if (_anchor.Value == PanelCorner.BottomLeft &&
+                _horizontalOffset.Value == 14 &&
+                _verticalOffset.Value == 92 &&
+                _followEmote.Value &&
+                _emoteGap.Value == 12 &&
+                _emoteHorizontalAdjust.Value == 0)
+            {
+                _horizontalOffset.Value = 26;
+                _verticalOffset.Value = 80;
+                _followEmote.Value = false;
+                Logger.LogInfo("Default Bell Control layout now uses a fixed position above Emote.");
+            }
+
+            _layoutRevision.Value = 3;
             Config.Save();
         }
 
