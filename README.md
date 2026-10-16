@@ -1,57 +1,23 @@
 # Stonewards Bell Control 🔔
 
-**Host-only bell permissions for Stonewards.** A small [BepInEx 5](https://github.com/BepInEx/BepInEx) + [Harmony](https://github.com/pardeike/Harmony) plugin that lets the host decide when other players are allowed to ring the wave bell.
+A lightweight **host-side** mod for Stonewards that lets the host decide when teammates can ring the wave bell.
 
-> [!IMPORTANT]
-> **Experimental.** Developed for **Stonewards 0.2.3**. The restored Emote-relative single-row position still needs in-game confirmation at different resolutions, as does multiplayer regression testing.
+**Version:** `0.1.0` · **Game:** Stonewards `0.2.3` · **Loader:** BepInEx 5
 
 ## Features
 
-- 🔒 **Guests blocked by default** when a host session starts.
-- 👑 **The host can always ring** the bell.
-- 🔓 **F8** toggles guest permissions; a host-only **Allow / Block** button appears in a native Unity Canvas.
-- 🎨 Party HUD-style stepped frame, graphite action button, muted gold and burgundy palette, and Stonewards' native Jersey10 font where available.
-- 🧭 **Precise Emote-relative positioning** by default. Bell Control stays hidden while the native Emote HUD loads, then appears directly above it without a visible jump. The default stays clear of Party HUD and the top-right gold/daily quest panels.
-- 📏 Single-row control: **248 × 42** reference UI units, reading `BELL · BLOCKED/ALLOWED · ALLOW/BLOCK [F8]`. No stacked title or guests row.
-- 📐 Configurable **FollowEmote**, **EmoteGap**, **EmoteHorizontalAdjust**, **Anchor**, edge offsets, and **Scale** in the BepInEx config.
-- 🛡️ **Server-side enforcement:** guest ring commands are ignored when blocked, even if guests do not have the plugin.
-- 🔄 **Resets on each hosted session:** returning to the menu / rehosting restores the blocked setting.
-- ⏱️ The regular countdown is not intentionally modified.
+- Guests are **blocked from ringing by default** when a hosted session starts.
+- The host can always ring the bell.
+- Toggle guest access using **F8** or the small **ALLOW / BLOCK** button.
+- Server-side command checks work even when guests do not have the mod installed.
+- A compact Party HUD-style panel follows the game's **Emote** shortcut in the bottom-left corner.
+- Position, Emote gap, scale and fallback offsets are configurable.
 
-**Compatibility:** designed for Stonewards **0.2.3**. New game versions may require new patches.
+## Install
 
-## Requirements
+Install **BellControl** through Thunderstore/r2modman and start Stonewards using the **same profile**. Only the **host** needs to install it.
 
-- Stonewards 0.2.3 on Windows
-- BepInEx **5** installed in the game directory **or in the active r2modman profile**
-- .NET SDK supporting `netstandard2.1` (required to *build*; not required to run a built DLL)
-- Locally installed game assemblies (`Stonewards_Data/Managed`) including `UnityEngine.UI.dll`, `UnityEngine.UIModule.dll`, `UnityEngine.UIElementsModule.dll` and `UnityEngine.TextRenderingModule.dll`, plus BepInEx core DLLs
-
-This repository does **not** contain or distribute copyrighted game DLLs.
-
-## Build and install (r2modman)
-
-Run PowerShell from the cloned repository directory:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\build-and-install.ps1 `
-  -GameDir "F:\Steam\steamapps\common\Stonewards" `
-  -ProfileDir "C:\Users\user\AppData\Roaming\r2modmanPlus-local\Stonewards\profiles\stonewards-bell-control"
-```
-
-**Adjust both paths to your installation and active r2modman profile.** The script finds Unity game DLLs in `GameDir\Stonewards_Data\Managed`, BepInEx assemblies in `ProfileDir\BepInEx\core`, builds the plugin, and installs it to:
-
-```text
-<ProfileDir>/BepInEx/plugins/StonewardsBellControl/StonewardsBellControl.dll
-```
-
-Then launch the game **through the same r2modman profile**.
-
-## Panel appearance and positioning
-
-The UI uses a real Unity Canvas (uGUI), not `OnGUI`, and appears only for the host. By default, it uses the **live Emote HUD bounds** to position itself, staying hidden until that position is available. The upper-left remains available to Party HUD; the upper-right stays clear for gold and Daily Quest Tracker. Set `FollowEmote = false` to use manual edge offsets. If Emote is absent for 8 seconds after gameplay starts, Bell Control uses the fixed fallback for that session without relocating later.
-
-Open the generated `BepInEx/config/dev.stonewards.bellcontrol.cfg` in your active r2modman profile:
+Configuration file: `BepInEx/config/dev.stonewards.bellcontrol.cfg`.
 
 ```ini
 [Appearance]
@@ -65,60 +31,34 @@ AvoidGoldCounter = true
 Scale = 1
 ```
 
-- `FollowEmote`: **true by default**, following the actual Emote HUD after it initializes. Set to `false` to use fixed offsets when using the `BottomLeft` anchor.
-- `EmoteGap`: physical pixel gap between the top of Emote and the bottom of Bell Control.
-- `EmoteHorizontalAdjust`: physical pixel adjustment relative to the Emote button's left edge, if needed.
-- `Anchor`: `TopRight`, `TopLeft`, `BottomRight` or `BottomLeft`. Other corners always use manual edge offsets.
-- `HorizontalOffset`: distance **inward** from the selected left/right edge when Emote following is disabled or unavailable.
-- `VerticalOffset`: fallback physical pixel distance **inward** from the selected top/bottom edge. For top anchors, **smaller moves the panel up**; for bottom anchors, **larger moves it up**.
-- `AvoidGoldCounter`: when `true` and `Anchor = TopRight`, the panel's top edge is never closer than **200 physical pixels** to the screen's top, so the native gold counter remains visible. Older profiles with `VerticalOffset = 80` are automatically protected. Disable to position the panel closer to the top edge.
-- `Scale`: from `0.65` to `1.60`. The panel is also reduced if needed to stay on-screen.
+When following Emote, the panel waits until the game's shortcut is available, rather than visibly moving after startup. If it cannot be found, a fixed fallback is used for that session. Press **F8** at any time, including when the panel is hidden.
 
-Untouched old preset positions from previous releases are migrated forward. The standard 0.2.6 fixed BottomLeft position (26 horizontal, 80 vertical with default Emote gap and adjustment) is migrated back to automatic Emote following. Custom anchors, offsets and Emote adjustments remain unchanged. The internal `LayoutRevision` option tracks this migration; do not edit it. Changes are picked up while the game is running when BepInEx updates its configuration; restarting the game reliably applies manual file edits. Offsets are clamped only to keep the panel on-screen.
+**Note:** Party HUD can also use F8 for its builds window; change that mod's hotkey if the two overlap.
 
-**Controls:** F8 always works for the host. The on-screen button can be clicked when the game cursor is available.
+## Building from source
 
-To compile without installing, omit `-ProfileDir` when BepInEx lives inside the game directory, or use `-NoInstall` with `-ProfileDir`. You can also set `-BepInExDir` explicitly when dependencies are in a different directory.
-
-## Build only (BepInEx installed into game directory)
+Requires a local Stonewards install, .NET SDK, and BepInEx 5. Game and framework DLLs are never redistributed.
 
 ```powershell
-.\scripts\build.ps1 -GameDir "F:\Steam\steamapps\common\Stonewards"
+powershell -ExecutionPolicy Bypass -File .\build-and-install.ps1 `
+  -GameDir "F:\Steam\steamapps\common\Stonewards" `
+  -ProfileDir "C:\Users\user\AppData\Roaming\r2modmanPlus-local\Stonewards\profiles\stonewards-bell-control"
 ```
 
-The build output is `src/StonewardsBellControl/bin/Release/netstandard2.1/StonewardsBellControl.dll`.
+Build the **Thunderstore upload ZIP** instead (compiles without installing):
 
-## Manual installation
+```powershell
+powershell -ExecutionPolicy Bypass -File .\package-thunderstore.ps1 `
+  -GameDir "F:\Steam\steamapps\common\Stonewards" `
+  -ProfileDir "C:\Users\user\AppData\Roaming\r2modmanPlus-local\Stonewards\profiles\stonewards-bell-control"
+```
 
-Copy the built `StonewardsBellControl.dll` into the **host's active** `BepInEx/plugins` directory (the r2modman profile if you use r2modman). Launch the game, host a session and press **F8** to toggle guest bell permissions. The panel is only displayed for the host.
+Result: `dist/thereisnouser-BellControl-0.1.0.zip`. The script validates the version, PNG icon, DLL and ZIP contents before finishing; it **does not upload** the package.
 
-**Guests do not need the plugin.** Remove the DLL to uninstall. Do not deploy a build into both the game directory and a mod manager profile at the same time.
+See [Thunderstore description](thunderstore/README.md), [multiplayer tests](docs/TESTING.md), [changelog](CHANGELOG.md), or [report an issue](https://github.com/thereisnouser/stonewards-bell-control/issues).
 
-## How it works
+## Compatibility and limitations
 
-The game sends guest bell interactions to the host through Mirror commands. For version 0.2.3, the plugin patches these server-side dispatch methods:
+Designed for **Stonewards 0.2.3**. Guests may still see a normal bell interaction prompt even when the server denies their ring request. The mod does not change the normal wave countdown or protect against unrelated wave-start mechanisms. New game versions may require code updates.
 
-- `Bell.InvokeUserCode_CmdTryRing__FirstPersonController`
-- `Bell.InvokeUserCode_CmdStartAnimation__FirstPersonController`
-
-With guest access blocked, those calls are ignored. Host-local calls use the game's local `UserCode_...` path, so they are unaffected. The mod does **not** change the countdown or grant network authority to guests.
-
-## Known limitations
-
-- Guests still see vanilla bell interaction text and progress UI, but their ring request will be denied while blocked.
-- The host's on-screen button requires an active UI cursor (F8 works regardless of cursor lock). While the cursor is locked, the mod disables its UI raycaster to avoid interfering with mouse look.
-- Native uGUI dependencies must be present in the installed game.
-- If guests began an animation while allowed, locking them out mid-interaction may leave a brief visual mismatch. The final ring request remains blocked.
-- This does **not** prevent other modded clients or game mechanics from invoking unrelated wave-start logic.
-- BepInEx may be detected by the game; modding can affect leaderboard eligibility. Review the game's current rules before using mods for online play.
-- The Emote UI lookup is heuristic and needs testing on the current game build; if it cannot identify the element, fixed BottomLeft fallback positioning remains available.
-
-See [multiplayer test plan](docs/TESTING.md) before publishing a release.
-
-## Project status
-
-**v0.2.7 — experimental precise Emote-relative single-row layout.** No compiled release asset is included. If the game updates, inspect the new assembly before claiming compatibility.
-
-## License
-
-[MIT](LICENSE) — applies to the mod source code only. Stonewards, Unity, Mirror, BepInEx and Harmony belong to their respective owners.
+[MIT License](LICENSE). This repository does not contain game assets or game binaries.
