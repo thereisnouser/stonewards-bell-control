@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.5] - Unreleased (experimental)
+
+- Replaced the three-row 222×88 panel with a single-row 248×42 control: BELL, colored guest permission, and an outlined ALLOW/BLOCK button with F8 hint.
+- Kept Party HUD-style stepped frame, game font and compact gold/graphite styling.
+- Preserved the Emote-relative anchor, fallback position, scaling, and host-only server permissions.
+
+> Source-only update; verify appearance and clickable behavior in-game.
+
 ## [0.2.4] - Unreleased (experimental)
 
 - Shrunk the Bell Control Canvas from 278×112 to 222×88 reference UI units, retaining the Party HUD-inspired visuals, status and action button.

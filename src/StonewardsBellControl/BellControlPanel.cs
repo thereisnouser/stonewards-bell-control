@@ -14,15 +14,15 @@ namespace StonewardsBellControl
     }
 
     /// <summary>
-    /// Party HUD-inspired Unity Canvas: the same stepped border, burgundy header,
-    /// graphite buttons and the game's own Jersey10 font. It remains independent
+    /// Party HUD-inspired single-row Unity Canvas: stepped border, burgundy
+    /// title accent, graphite action button and the game's Jersey10 font.
+    /// It remains independent
     /// of Party HUD and does not distribute game textures or font files.
     /// </summary>
     internal sealed class BellControlPanel : IDisposable
     {
-        private const float Width = 222f;
-        private const float Height = 88f;
-        private const float HeaderHeight = 29f;
+        private const float Width = 248f;
+        private const float Height = 42f;
         private const float EdgePadding = 6f;
         // The vanilla gold display is taller than its visible numeric row:
         // reserve enough space for its whole backing panel and an extra gap.
@@ -36,7 +36,6 @@ namespace StonewardsBellControl
         private static readonly Color Divider = new Color(0.71f, 0.63f, 0.48f, 0.38f);
         private static readonly Color Heading = new Color(0.98f, 0.79f, 0.51f, 1f);
         private static readonly Color TextColor = new Color(0.98f, 0.90f, 0.76f, 1f);
-        private static readonly Color MutedText = new Color(0.84f, 0.81f, 0.74f, 1f);
         private static readonly Color Green = new Color(0.47f, 0.87f, 0.56f, 1f);
         private static readonly Color Red = new Color(1f, 0.52f, 0.50f, 1f);
         private static readonly Color ButtonFill = new Color(55f / 255f, 59f / 255f, 69f / 255f, 1f);
@@ -89,44 +88,40 @@ namespace StonewardsBellControl
             _panelRoot = CreateRect("Bell Control Window", _canvasObject.transform,
                 0f, 0f, Width, Height);
 
-            // Stonewards windows have 7px diagonal steps, not square flat borders.
+            // Compact single-row panel. Keep Party HUD's pixel-stepped border,
+            // a burgundy title accent and the graphite/gold action control.
             AddSolid("Background Top", _panelRoot, 7, 0, Width - 14, Height, PanelBackground);
             AddSolid("Background Center", _panelRoot, 0, 7, Width, Height - 14, PanelBackground);
-            AddSolid("Header Top", _panelRoot, 7, 2, Width - 14, HeaderHeight - 2, PanelHeader);
-            AddSolid("Header Center", _panelRoot, 2, 7, Width - 4, HeaderHeight - 7, PanelHeader);
-            DrawWindowFrame(_panelRoot, Width, Height, HeaderHeight);
+            AddSolid("Burgundy Title Top", _panelRoot, 7, 2, 51, Height - 4, PanelHeader);
+            AddSolid("Burgundy Title Center", _panelRoot, 2, 7, 56, Height - 14, PanelHeader);
+            DrawWindowFrame(_panelRoot, Width, Height);
 
-            AddText("Title", _panelRoot, font, "BELL CONTROL", 17, true,
-                Heading, TextAnchor.MiddleLeft, 13, 3, 154, 24);
-            AddText("Host", _panelRoot, font, "HOST", 11, true,
-                MutedText, TextAnchor.MiddleRight, 179, 4, 29, 23);
+            AddText("Title", _panelRoot, font, "BELL", 17, true,
+                Heading, TextAnchor.MiddleLeft, 12, 5, 42, 31);
+            AddSolid("Divider", _panelRoot, 59, 10, 1, 22, Divider);
 
-            AddSolid("Status Accent", _panelRoot, 9, 38, 3, 19, ButtonOutline);
-            AddText("Guests", _panelRoot, font, "GUESTS", 14, true,
-                TextColor, TextAnchor.MiddleLeft, 17, 34, 90, 26);
-            _statusBar = AddSolid("Status Bar", _panelRoot, 142, 38, 2, 17, Red);
-            _statusText = AddText("Status", _panelRoot, font, "BLOCKED", 15, true,
-                Red, TextAnchor.MiddleRight, 150, 34, 59, 25);
+            _statusBar = AddSolid("Status Accent", _panelRoot, 65, 13, 3, 17, Red);
+            _statusText = AddText("Status", _panelRoot, font, "BLOCKED", 16, true,
+                Red, TextAnchor.MiddleCenter, 71, 5, 69, 31);
 
-            // Native-style stepped button occupies a shallow 24px row.
+            // Allow/Block is the only clickable part of the bar.
             var action = CreateRect("Guest Permission Button", _panelRoot,
-                10, 62, Width - 20, 23);
-            _buttonFill = AddSolid("Button Top", action, 3, 0, Width - 26, 23, ButtonFill);
-            _buttonFillCenter = AddSolid("Button Center", action, 0, 3, Width - 20, 17, ButtonFill);
-            DrawButtonFrame(action, Width - 20, 23);
-            // Only the actual button background is a raycast target.
+                147, 7, 92, 28);
+            _buttonFill = AddSolid("Button Top", action, 3, 0, 86, 28, ButtonFill);
+            _buttonFillCenter = AddSolid("Button Center", action, 0, 3, 92, 22, ButtonFill);
+            DrawButtonFrame(action, 92, 28);
             _buttonFill.raycastTarget = true;
+
             var button = action.gameObject.AddComponent<Button>();
             button.targetGraphic = _buttonFill;
-            // Do not let Unity's ColorTint state machine turn the dark fill white.
-            // The button color is determined by the actual allowed/blocked state.
+            // Game-style fill: no Unity ColorTint state changes.
             button.transition = Selectable.Transition.None;
             button.onClick.AddListener(OnButtonClicked);
 
-            _actionText = AddText("Action", action, font, "ALLOW GUESTS", 14, true,
-                TextColor, TextAnchor.MiddleCenter, 6, 0, 165, 23);
-            _shortcutText = AddText("Shortcut", action, font, "F8", 11, true,
-                Heading, TextAnchor.MiddleCenter, 175, 0, 20, 23);
+            _actionText = AddText("Action", action, font, "ALLOW", 16, true,
+                TextColor, TextAnchor.MiddleCenter, 5, 0, 57, 28);
+            _shortcutText = AddText("Shortcut", action, font, "F8", 12, true,
+                Heading, TextAnchor.MiddleCenter, 64, 0, 22, 28);
         }
 
         public void SetAllowed(bool allowed)
@@ -137,7 +132,7 @@ namespace StonewardsBellControl
             _statusText.text = allowed ? "ALLOWED" : "BLOCKED";
             _statusText.color = allowed ? Green : Red;
             _statusBar.color = allowed ? Green : Red;
-            _actionText.text = allowed ? "BLOCK GUESTS" : "ALLOW GUESTS";
+            _actionText.text = allowed ? "BLOCK" : "ALLOW";
             _shortcutText.text = "F8";
             _buttonFill.color = allowed ? ButtonActive : ButtonFill;
             _buttonFillCenter.color = allowed ? ButtonActive : ButtonFill;
@@ -228,7 +223,7 @@ namespace StonewardsBellControl
                 right ? -x : x, top ? -y : y);
         }
 
-        private static void DrawWindowFrame(Transform parent, float w, float h, float hh)
+        private static void DrawWindowFrame(Transform parent, float w, float h)
         {
             const float e = 2f;
             AddSolid("Frame Top", parent, 8, 0, w - 16, e, PanelFrame);
@@ -243,7 +238,6 @@ namespace StonewardsBellControl
             AddSolid("Bottom Left Step 2", parent, 2, h - 7, 3, e, PanelFrame);
             AddSolid("Bottom Right Step 1", parent, w - 8, h - 4, 3, e, PanelFrame);
             AddSolid("Bottom Right Step 2", parent, w - 5, h - 7, 3, e, PanelFrame);
-            AddSolid("Header Bottom Edge", parent, 2, hh - 1, w - 4, 1, PanelFrame);
         }
 
         private static void DrawButtonFrame(Transform parent, float w, float h)

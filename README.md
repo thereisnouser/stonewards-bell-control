@@ -3,7 +3,7 @@
 **Host-only bell permissions for Stonewards.** A small [BepInEx 5](https://github.com/BepInEx/BepInEx) + [Harmony](https://github.com/pardeike/Harmony) plugin that lets the host decide when other players are allowed to ring the wave bell.
 
 > [!IMPORTANT]
-> **Experimental.** Developed for **Stonewards 0.2.3**. The previous Canvas UI was shown in user gameplay screenshots. The new Emote-relative position and compact size still need in-game confirmation, as does multiplayer regression testing.
+> **Experimental.** Developed for **Stonewards 0.2.3**. Earlier Canvas layouts were shown in user gameplay screenshots. The single-row UI and Emote-relative positioning still need in-game confirmation, as does multiplayer regression testing.
 
 ## Features
 
@@ -12,7 +12,7 @@
 - 🔓 **F8** toggles guest permissions; a host-only **Allow / Block** button appears in a native Unity Canvas.
 - 🎨 Party HUD-style stepped frame, graphite action button, muted gold and burgundy palette, and Stonewards' native Jersey10 font where available.
 - 🧭 **Follows the in-game Emote prompt** near the lower-left corner using its live UI Toolkit bounds, with a small configurable gap. Falls back to BottomLeft when Emote cannot be detected. This stays clear of Party HUD and the top-right gold/daily quest panels.
-- 📏 Compact control: **222 × 88** reference UI units instead of 278 × 112.
+- 📏 Single-row control: **248 × 42** reference UI units, reading `BELL · BLOCKED/ALLOWED · ALLOW/BLOCK [F8]`. No stacked title or guests row.
 - 📐 Configurable **FollowEmote**, **EmoteGap**, **EmoteHorizontalAdjust**, **Anchor**, edge offsets, and **Scale** in the BepInEx config.
 - 🛡️ **Server-side enforcement:** guest ring commands are ignored when blocked, even if guests do not have the plugin.
 - 🔄 **Resets on each hosted session:** returning to the menu / rehosting restores the blocked setting.
@@ -117,7 +117,7 @@ See [multiplayer test plan](docs/TESTING.md) before publishing a release.
 
 ## Project status
 
-**v0.2.4 — experimental compact Emote-following layout.** No compiled release asset is included. If the game updates, inspect the new assembly before claiming compatibility.
+**v0.2.5 — experimental single-row Emote-following layout.** No compiled release asset is included. If the game updates, inspect the new assembly before claiming compatibility.
 
 ## License
 

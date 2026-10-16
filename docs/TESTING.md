@@ -15,7 +15,8 @@ The checks below are **not completed tests**. They should be performed before pu
 - [ ] Native Canvas panel is visible only to host; F8 changes `BLOCKED` / `ALLOWED`.
 - [ ] Panel uses Party HUD's stepped border, gold button outline and native Jersey10 typeface.
 - [ ] Fresh profile: Bell Control follows the actual Emote shortcut, directly above it with the configured 12px gap, leaving Emote clickable and visible.
-- [ ] Compact 222×88 reference-unit panel has readable title, permission status and F8 action text.
+- [ ] Single-row 248×42 reference-unit panel reads BELL, BLOCKED/ALLOWED, ALLOW/BLOCK and F8 without wrapping or clipping at 1920×1080 and 2560×1440.
+- [ ] New shorter panel is still positioned directly above Emote and does not obstruct the game shortcut.
 - [ ] Changing game resolution or UI scale moves Bell Control together with Emote.
 - [ ] With FollowEmote disabled, Bell Control falls back to BottomLeft (14px from left, 92px bottom inset).
 - [ ] If the Emote element is not found, the fallback works without crashes or frequent UI rescanning.

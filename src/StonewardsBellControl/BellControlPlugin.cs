@@ -13,7 +13,7 @@ namespace StonewardsBellControl
     {
         public const string PluginGuid = "dev.stonewards.bellcontrol";
         public const string PluginName = "Stonewards Bell Control";
-        public const string PluginVersion = "0.2.4";
+        public const string PluginVersion = "0.2.5";
 
         internal static bool GuestsMayRing { get; private set; }
 
