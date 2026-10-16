@@ -14,8 +14,12 @@ The checks below are **not completed tests**. They should be performed before pu
 - [ ] Host boots without a plugin load or Harmony patch error.
 - [ ] Native Canvas panel is visible only to host; F8 changes `BLOCKED` / `ALLOWED`.
 - [ ] Panel uses Party HUD's stepped border, gold button outline and native Jersey10 typeface.
-- [ ] Fresh profile: Bell Control defaults to BottomLeft (14px from left, 146px above bottom) and does not obscure Emote, Party HUD, gold or Daily Quest Tracker.
-- [ ] Existing old-default TopRight profile migrates to BottomLeft on first start, without manual config editing.
+- [ ] Fresh profile: Bell Control follows the actual Emote shortcut, directly above it with the configured 12px gap, leaving Emote clickable and visible.
+- [ ] Compact 222×88 reference-unit panel has readable title, permission status and F8 action text.
+- [ ] Changing game resolution or UI scale moves Bell Control together with Emote.
+- [ ] With FollowEmote disabled, Bell Control falls back to BottomLeft (14px from left, 92px bottom inset).
+- [ ] If the Emote element is not found, the fallback works without crashes or frequent UI rescanning.
+- [ ] Previous default BottomLeft (14, 146) and older default TopRight offsets migrate to the new fallback without manual editing.
 - [ ] User-customized anchor or offsets are preserved during the one-time migration.
 - [ ] With `Anchor = TopRight`, `VerticalOffset = 80`, and `AvoidGoldCounter = true`, the gold count and its full backing panel remain visible, with a clear gap below it.
 - [ ] With `AvoidGoldCounter = false`, the panel can be positioned closer to the top with VerticalOffset.

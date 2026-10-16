@@ -13,7 +13,7 @@ namespace StonewardsBellControl
     {
         public const string PluginGuid = "dev.stonewards.bellcontrol";
         public const string PluginName = "Stonewards Bell Control";
-        public const string PluginVersion = "0.2.3";
+        public const string PluginVersion = "0.2.4";
 
         internal static bool GuestsMayRing { get; private set; }
 
@@ -23,6 +23,10 @@ namespace StonewardsBellControl
         private ConfigEntry<float> _scale;
         private ConfigEntry<bool> _avoidGoldCounter;
         private ConfigEntry<int> _layoutRevision;
+        private ConfigEntry<bool> _followEmote;
+        private ConfigEntry<int> _emoteGap;
+        private ConfigEntry<int> _emoteHorizontalAdjust;
+        private EmoteHudAnchor _emoteHud;
 
         private Harmony _harmony;
         private BellControlPanel _panel;
@@ -37,10 +41,18 @@ namespace StonewardsBellControl
                 "Corner used to position the Bell Control panel.");
             _horizontalOffset = Config.Bind("Appearance", "HorizontalOffset", 14,
                 "Distance inward from the selected left/right screen edge, in reference-resolution units.");
-            _verticalOffset = Config.Bind("Appearance", "VerticalOffset", 146,
+            _verticalOffset = Config.Bind("Appearance", "VerticalOffset", 92,
                 "Distance inward from the selected top/bottom screen edge, in actual screen pixels.");
             _avoidGoldCounter = Config.Bind("Appearance", "AvoidGoldCounter", true,
                 "Keep the Bell Control panel below the native gold counter when anchored TopRight.");
+            _followEmote = Config.Bind("Appearance", "FollowEmote", true,
+                "Position the panel above the actual Emote HUD shortcut while anchored BottomLeft.");
+            _emoteGap = Config.Bind("Appearance", "EmoteGap", 12,
+                "Gap in physical pixels between Emote and the Bell Control panel.");
+            _emoteHorizontalAdjust = Config.Bind("Appearance", "EmoteHorizontalAdjust", 0,
+                "Horizontal adjustment in physical pixels relative to the Emote shortcut.");
+            _emoteHud = new EmoteHudAnchor(Logger);
+
             _scale = Config.Bind("Appearance", "Scale", 1.0f,
                 new ConfigDescription("Panel scale (0.65 - 1.60).",
                     new AcceptableValueRange<float>(0.65f, 1.60f)));
@@ -59,11 +71,11 @@ namespace StonewardsBellControl
 
         private void MigrateLayoutIfNeeded()
         {
-            if (_layoutRevision.Value >= 1)
+            if (_layoutRevision.Value >= 2)
                 return;
 
-            // Previous builds used 80, 132 and 200px as their default
-            // top-right inset. Move only those known presets, not custom layouts.
+            // Migrate only historical defaults. User-selected anchors and
+            // custom offsets are preserved; FollowEmote can be disabled.
             if (_anchor.Value == PanelCorner.TopRight &&
                 _horizontalOffset.Value == 14 &&
                 (_verticalOffset.Value == 80 ||
@@ -71,11 +83,17 @@ namespace StonewardsBellControl
                  _verticalOffset.Value == 200))
             {
                 _anchor.Value = PanelCorner.BottomLeft;
-                _verticalOffset.Value = 146;
-                Logger.LogInfo("Moved default Bell Control panel to BottomLeft to avoid the daily quest tracker.");
+                _verticalOffset.Value = 92;
+                Logger.LogInfo("Moved default Bell Control layout above Emote.");
+            }
+            else if (_anchor.Value == PanelCorner.BottomLeft &&
+                _horizontalOffset.Value == 14 && _verticalOffset.Value == 146)
+            {
+                _verticalOffset.Value = 92;
+                Logger.LogInfo("Updated bottom-left fallback offset for compact panel.");
             }
 
-            _layoutRevision.Value = 1;
+            _layoutRevision.Value = 2;
             Config.Save();
         }
 
@@ -88,6 +106,8 @@ namespace StonewardsBellControl
                 GuestsMayRing = false;
                 _wasHosting = hosting;
                 _uiUnavailable = false;
+                if (_emoteHud != null)
+                    _emoteHud.Reset();
                 DisposePanel();
             }
 
@@ -116,8 +136,20 @@ namespace StonewardsBellControl
                 }
             }
 
+            // The Emote badge is found once and then tracked by its live
+            // UI Toolkit bounds, including when the screen resolution changes.
+            Rect? emoteBadge = null;
+            if (_followEmote.Value && _anchor.Value == PanelCorner.BottomLeft)
+            {
+                _emoteHud.RefreshIfNeeded();
+                Rect bounds;
+                if (_emoteHud.TryGetBadgeBounds(out bounds))
+                    emoteBadge = bounds;
+            }
+
             _panel.UpdateLayout(_anchor.Value, _horizontalOffset.Value,
-                _verticalOffset.Value, _scale.Value, _avoidGoldCounter.Value);
+                _verticalOffset.Value, _scale.Value, _avoidGoldCounter.Value,
+                emoteBadge, _emoteGap.Value, _emoteHorizontalAdjust.Value);
             _panel.UpdateInteraction();
         }
 

@@ -21,6 +21,7 @@ $requiredFiles = @(
     (Join-Path $managedDir 'UnityEngine.dll'),
     (Join-Path $managedDir 'UnityEngine.CoreModule.dll'),
     (Join-Path $managedDir 'UnityEngine.UIModule.dll'),
+    (Join-Path $managedDir 'UnityEngine.UIElementsModule.dll'),
     (Join-Path $managedDir 'UnityEngine.UI.dll'),
     (Join-Path $managedDir 'UnityEngine.TextRenderingModule.dll'),
     (Join-Path $managedDir 'UnityEngine.IMGUIModule.dll'),

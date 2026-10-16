@@ -45,6 +45,7 @@ $required = @(
     (Join-Path $managed 'UnityEngine.dll'),
     (Join-Path $managed 'UnityEngine.CoreModule.dll'),
     (Join-Path $managed 'UnityEngine.UIModule.dll'),
+    (Join-Path $managed 'UnityEngine.UIElementsModule.dll'),
     (Join-Path $managed 'UnityEngine.UI.dll'),
     (Join-Path $managed 'UnityEngine.TextRenderingModule.dll'),
     (Join-Path $managed 'UnityEngine.IMGUIModule.dll'),

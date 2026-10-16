@@ -20,9 +20,9 @@ namespace StonewardsBellControl
     /// </summary>
     internal sealed class BellControlPanel : IDisposable
     {
-        private const float Width = 278f;
-        private const float Height = 112f;
-        private const float HeaderHeight = 38f;
+        private const float Width = 222f;
+        private const float Height = 88f;
+        private const float HeaderHeight = 29f;
         private const float EdgePadding = 6f;
         // The vanilla gold display is taller than its visible numeric row:
         // reserve enough space for its whole backing panel and an extra gap.
@@ -96,25 +96,24 @@ namespace StonewardsBellControl
             AddSolid("Header Center", _panelRoot, 2, 7, Width - 4, HeaderHeight - 7, PanelHeader);
             DrawWindowFrame(_panelRoot, Width, Height, HeaderHeight);
 
-            AddText("Title", _panelRoot, font, "BELL CONTROL", 19, true,
-                Heading, TextAnchor.MiddleLeft, 14, 5, 190, 29);
-            AddText("Host", _panelRoot, font, "HOST", 12, true,
-                MutedText, TextAnchor.MiddleRight, 214, 8, 49, 23);
+            AddText("Title", _panelRoot, font, "BELL CONTROL", 17, true,
+                Heading, TextAnchor.MiddleLeft, 13, 3, 154, 24);
+            AddText("Host", _panelRoot, font, "HOST", 11, true,
+                MutedText, TextAnchor.MiddleRight, 179, 4, 29, 23);
 
-            AddSolid("Status Accent", _panelRoot, 9, 49, 3, 26, ButtonOutline);
-            AddText("Guests", _panelRoot, font, "GUESTS", 16, true,
-                TextColor, TextAnchor.MiddleLeft, 19, 48, 115, 29);
-            _statusBar = AddSolid("Status Bar", _panelRoot, 177, 52, 3, 19, Red);
-            _statusText = AddText("Status", _panelRoot, font, "BLOCKED", 17, true,
-                Red, TextAnchor.MiddleRight, 185, 46, 78, 30);
-            AddSolid("Bottom Divider", _panelRoot, 12, 78, Width - 24, 1, Divider);
+            AddSolid("Status Accent", _panelRoot, 9, 38, 3, 19, ButtonOutline);
+            AddText("Guests", _panelRoot, font, "GUESTS", 14, true,
+                TextColor, TextAnchor.MiddleLeft, 17, 34, 90, 26);
+            _statusBar = AddSolid("Status Bar", _panelRoot, 142, 38, 2, 17, Red);
+            _statusText = AddText("Status", _panelRoot, font, "BLOCKED", 15, true,
+                Red, TextAnchor.MiddleRight, 150, 34, 59, 25);
 
-            // A Party HUD-shaped button, including 2px stepped golden border.
+            // Native-style stepped button occupies a shallow 24px row.
             var action = CreateRect("Guest Permission Button", _panelRoot,
-                12, 83, Width - 24, 25);
-            _buttonFill = AddSolid("Button Top", action, 3, 0, Width - 30, 25, ButtonFill);
-            _buttonFillCenter = AddSolid("Button Center", action, 0, 3, Width - 24, 19, ButtonFill);
-            DrawButtonFrame(action, Width - 24, 25);
+                10, 62, Width - 20, 23);
+            _buttonFill = AddSolid("Button Top", action, 3, 0, Width - 26, 23, ButtonFill);
+            _buttonFillCenter = AddSolid("Button Center", action, 0, 3, Width - 20, 17, ButtonFill);
+            DrawButtonFrame(action, Width - 20, 23);
             // Only the actual button background is a raycast target.
             _buttonFill.raycastTarget = true;
             var button = action.gameObject.AddComponent<Button>();
@@ -124,10 +123,10 @@ namespace StonewardsBellControl
             button.transition = Selectable.Transition.None;
             button.onClick.AddListener(OnButtonClicked);
 
-            _actionText = AddText("Action", action, font, "ALLOW GUESTS", 15, true,
-                TextColor, TextAnchor.MiddleCenter, 9, 0, 202, 25);
-            _shortcutText = AddText("Shortcut", action, font, "F8", 12, true,
-                Heading, TextAnchor.MiddleCenter, 212, 0, 31, 25);
+            _actionText = AddText("Action", action, font, "ALLOW GUESTS", 14, true,
+                TextColor, TextAnchor.MiddleCenter, 6, 0, 165, 23);
+            _shortcutText = AddText("Shortcut", action, font, "F8", 11, true,
+                Heading, TextAnchor.MiddleCenter, 175, 0, 20, 23);
         }
 
         public void SetAllowed(bool allowed)
@@ -171,8 +170,9 @@ namespace StonewardsBellControl
         }
 
         /// <summary>Margins are measured from the selected physical screen edge.</summary>
-        public void UpdateLayout(PanelCorner corner, int horizontalOffset, int verticalOffset,
-            float requestedScale, bool avoidGoldCounter)
+        public void UpdateLayout(PanelCorner corner, int horizontalOffset,
+            int verticalOffset, float requestedScale, bool avoidGoldCounter,
+            Rect? emoteBadge, int emoteGapPixels, int emoteHorizontalAdjustPixels)
         {
             if (!IsAlive)
                 return;
@@ -182,27 +182,50 @@ namespace StonewardsBellControl
             float canvasHeight = Screen.height / canvasScale;
             float panelScale = Mathf.Clamp(requestedScale, 0.65f, 1.6f);
             panelScale = Mathf.Min(panelScale,
-                Mathf.Max(0.1f, (canvasWidth - EdgePadding * 2) / Width),
-                Mathf.Max(0.1f, (canvasHeight - EdgePadding * 2) / Height));
+                Mathf.Max(0.1f, (canvasWidth - EdgePadding * 2f) / Width),
+                Mathf.Max(0.1f, (canvasHeight - EdgePadding * 2f) / Height));
             _panelRoot.localScale = Vector3.one * panelScale;
 
-            bool right = corner == PanelCorner.TopRight || corner == PanelCorner.BottomRight;
-            bool top = corner == PanelCorner.TopRight || corner == PanelCorner.TopLeft;
+            bool right = corner == PanelCorner.TopRight ||
+                corner == PanelCorner.BottomRight;
+            bool top = corner == PanelCorner.TopRight ||
+                corner == PanelCorner.TopLeft;
             Vector2 anchor = new Vector2(right ? 1f : 0f, top ? 1f : 0f);
             _panelRoot.anchorMin = anchor;
             _panelRoot.anchorMax = anchor;
             _panelRoot.pivot = anchor;
 
-            float x = Mathf.Clamp(Mathf.Max(0, horizontalOffset), EdgePadding,
-                Mathf.Max(EdgePadding, canvasWidth - Width * panelScale - EdgePadding));
+            float maxX = Mathf.Max(EdgePadding, canvasWidth -
+                Width * panelScale - EdgePadding);
+            float maxY = Mathf.Max(EdgePadding, canvasHeight -
+                Height * panelScale - EdgePadding);
 
-            float minTopPixels = top && right && avoidGoldCounter
+            // Follow the live Emote shortcut and preserve a physical-pixel gap.
+            // This does not assume the HUD's default scale or a fixed resolution.
+            // The old bottom-left edge offsets remain a safe fallback.
+            if (corner == PanelCorner.BottomLeft && emoteBadge.HasValue)
+            {
+                Rect badge = emoteBadge.Value;
+                float physicalX = badge.xMin + emoteHorizontalAdjustPixels;
+                float physicalBottom = Screen.height - badge.yMin +
+                    Mathf.Max(0, emoteGapPixels);
+                float followX = Mathf.Clamp(physicalX / canvasScale,
+                    EdgePadding, maxX);
+                float followY = Mathf.Clamp(physicalBottom / canvasScale,
+                    EdgePadding, maxY);
+                _panelRoot.anchoredPosition = new Vector2(followX, followY);
+                return;
+            }
+
+            // Manual offset remains measured from the selected edge.
+            float x = Mathf.Clamp(Mathf.Max(0, horizontalOffset),
+                EdgePadding, maxX);
+            float minimumTop = top && right && avoidGoldCounter
                 ? GoldSafeTopPixels : EdgePadding * canvasScale;
-            float yPhysical = Mathf.Max(Mathf.Max(0, verticalOffset), minTopPixels);
-            float y = Mathf.Clamp(yPhysical / canvasScale, EdgePadding,
-                Mathf.Max(EdgePadding, canvasHeight - Height * panelScale - EdgePadding));
-
-            _panelRoot.anchoredPosition = new Vector2(right ? -x : x, top ? -y : y);
+            float yPixels = Mathf.Max(Mathf.Max(0, verticalOffset), minimumTop);
+            float y = Mathf.Clamp(yPixels / canvasScale, EdgePadding, maxY);
+            _panelRoot.anchoredPosition = new Vector2(
+                right ? -x : x, top ? -y : y);
         }
 
         private static void DrawWindowFrame(Transform parent, float w, float h, float hh)

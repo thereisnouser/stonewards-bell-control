@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.4] - Unreleased (experimental)
+
+- Shrunk the Bell Control Canvas from 278×112 to 222×88 reference UI units, retaining the Party HUD-inspired visuals, status and action button.
+- Added an Emote UI Toolkit locator: follow the in-game shortcut's live bounds, including with different resolutions and UI scales.
+- Added FollowEmote, EmoteGap and EmoteHorizontalAdjust settings, with a fixed BottomLeft fallback if the native shortcut is unavailable.
+- Updated previous default layout positions to a 92px fallback bottom offset while preserving custom positions.
+- Added the UIElementsModule reference needed for HUD discovery; bell permission patches and F8 remain unchanged.
+
+> Requires local compilation and gameplay verification before publishing a release.
+
 ## [0.2.3] - Unreleased (experimental)
 
 - Relocated the default host panel to BottomLeft (14 horizontal, 146px bottom margin) to avoid the top-right Daily Quest Tracker, gold counter and the top-left Party HUD.
