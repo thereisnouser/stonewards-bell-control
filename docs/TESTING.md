@@ -14,13 +14,16 @@ The checks below are **not completed tests**. They should be performed before pu
 - [ ] Host boots without a plugin load or Harmony patch error.
 - [ ] Native Canvas panel is visible only to host; F8 changes `BLOCKED` / `ALLOWED`.
 - [ ] Panel uses Party HUD's stepped border, gold button outline and native Jersey10 typeface.
-- [ ] Fresh profile: Bell Control appears immediately in a fixed BottomLeft position (horizontal 26, vertical 80) above Emote, without any delayed repositioning.
-- [ ] Existing default v0.2.5 profile migrates to fixed placement on first startup; intentionally customized layouts are unchanged.
+- [ ] Fresh profile: Bell Control stays hidden until the Emote UI is detected, then appears directly above it with no visible position jump.
+- [ ] Existing default v0.2.6 profile migrates back to FollowEmote = true; custom anchor/offset positions remain unchanged.
+- [ ] Timeout starts only once gameplay begins, not while waiting in the host lobby.
+- [ ] If Emote cannot be found after 8 seconds of gameplay, panel uses a fixed fallback without a later position jump.
+- [ ] When the Emote badge temporarily disappears, the panel does not snap to the fallback.
 - [ ] With FollowEmote explicitly enabled, Bell Control dynamically tracks the Emote shortcut, preserving the configured EmoteGap.
 - [ ] Single-row 248×42 reference-unit panel reads BELL, BLOCKED/ALLOWED, ALLOW/BLOCK and F8 without wrapping or clipping at 1920×1080 and 2560×1440.
 - [ ] New shorter panel is still positioned directly above Emote and does not obstruct the game shortcut.
-- [ ] Changing game resolution or UI scale keeps the fixed BottomLeft placement on-screen, near Emote; follow mode additionally tracks the actual button.
-- [ ] With FollowEmote disabled (default), Bell Control uses BottomLeft (26 reference units from left, 80 physical pixels from bottom).
+- [ ] Changing game resolution or UI scale keeps the panel correctly positioned relative to the live Emote HUD.
+- [ ] With FollowEmote manually disabled, Bell Control uses BottomLeft (26 reference units from left, 80 physical pixels from bottom).
 - [ ] If the Emote element is not found, the fallback works without crashes or frequent UI rescanning.
 - [ ] Previous default BottomLeft (14, 146) and older default TopRight offsets migrate to the new fallback without manual editing.
 - [ ] User-customized anchor or offsets are preserved during the one-time migration.

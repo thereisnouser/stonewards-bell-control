@@ -56,6 +56,7 @@ namespace StonewardsBellControl
         private readonly Image _buttonFillCenter;
         private float _nextFontCheck;
         private bool _gameFontApplied;
+        private bool _visible;
 
         public bool IsAlive => _canvasObject != null && _panelRoot != null;
 
@@ -66,6 +67,9 @@ namespace StonewardsBellControl
             UnityEngine.Object.DontDestroyOnLoad(_canvasObject);
 
             _canvas = _canvasObject.AddComponent<Canvas>();
+            // Do not render at the prefab's origin before its first valid layout.
+            _canvas.enabled = false;
+            _visible = false;
             _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             _canvas.sortingOrder = 110;
 
@@ -138,13 +142,28 @@ namespace StonewardsBellControl
             _buttonFillCenter.color = allowed ? ButtonActive : ButtonFill;
         }
 
+        public void SetVisible(bool visible)
+        {
+            if (!IsAlive)
+                return;
+
+            if (_visible != visible)
+            {
+                _visible = visible;
+                _canvas.enabled = visible;
+            }
+            if (!visible)
+                _raycaster.enabled = false;
+        }
+
         public void UpdateInteraction()
         {
             if (!IsAlive)
                 return;
 
-            // Do not capture game mouse input while the first-person cursor is locked.
-            _raycaster.enabled = Cursor.visible && Cursor.lockState == CursorLockMode.None;
+            // The hidden/pending panel must never intercept input.
+            _raycaster.enabled = _visible &&
+                Cursor.visible && Cursor.lockState == CursorLockMode.None;
 
             // The native UI font may load after the plugin or scene initializes.
             if (!_gameFontApplied && Time.unscaledTime >= _nextFontCheck)
@@ -172,7 +191,12 @@ namespace StonewardsBellControl
             if (!IsAlive)
                 return;
 
-            float canvasScale = Mathf.Max(0.01f, _canvas.scaleFactor);
+            // CanvasScaler uses ScaleWithScreenSize, 1920x1080, Match = 0.5.
+            // Calculate it even while Canvas.enabled is false, so the very
+            // first visible frame matches the final screen-space position.
+            float canvasScale = Mathf.Max(0.01f, Mathf.Sqrt(
+                Mathf.Max(0.01f, Screen.width / 1920f) *
+                Mathf.Max(0.01f, Screen.height / 1080f)));
             float canvasWidth = Screen.width / canvasScale;
             float canvasHeight = Screen.height / canvasScale;
             float panelScale = Mathf.Clamp(requestedScale, 0.65f, 1.6f);

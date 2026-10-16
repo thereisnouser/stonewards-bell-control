@@ -13,7 +13,7 @@ namespace StonewardsBellControl
     {
         public const string PluginGuid = "dev.stonewards.bellcontrol";
         public const string PluginName = "Stonewards Bell Control";
-        public const string PluginVersion = "0.2.6";
+        public const string PluginVersion = "0.2.7";
 
         internal static bool GuestsMayRing { get; private set; }
 
@@ -32,6 +32,13 @@ namespace StonewardsBellControl
         private BellControlPanel _panel;
         private bool _wasHosting;
         private bool _uiUnavailable;
+        private bool _anchorFallbackLocked;
+        private bool _anchorSearchStarted;
+        private float _anchorDeadline;
+
+        // Give the in-game Emote HUD time to appear; never show a temporary
+        // fixed-position panel while the tracker is still resolving it.
+        private const float AnchorResolutionTimeout = 8f;
 
         private static bool IsHost => NetworkServer.active && NetworkClient.active;
 
@@ -45,8 +52,8 @@ namespace StonewardsBellControl
                 "Distance inward from the selected top/bottom screen edge, in actual screen pixels.");
             _avoidGoldCounter = Config.Bind("Appearance", "AvoidGoldCounter", true,
                 "Keep the Bell Control panel below the native gold counter when anchored TopRight.");
-            _followEmote = Config.Bind("Appearance", "FollowEmote", false,
-                "Optional: follow the actual Emote HUD; disabled by default for instant, stable positioning.");
+            _followEmote = Config.Bind("Appearance", "FollowEmote", true,
+                "Follow the in-game Emote shortcut. Panel stays hidden until positioned, avoiding startup jumps.");
             _emoteGap = Config.Bind("Appearance", "EmoteGap", 12,
                 "Gap in physical pixels between Emote and the Bell Control panel.");
             _emoteHorizontalAdjust = Config.Bind("Appearance", "EmoteHorizontalAdjust", 0,
@@ -71,11 +78,10 @@ namespace StonewardsBellControl
 
         private void MigrateLayoutIfNeeded()
         {
-            if (_layoutRevision.Value >= 3)
+            if (_layoutRevision.Value >= 4)
                 return;
 
-            // Old TopRight defaults and the original tall BottomLeft layout
-            // were never deliberate custom coordinates: migrate them first.
+            // Historical default positions are migrated, not custom layouts.
             if (_layoutRevision.Value < 2)
             {
                 if (_anchor.Value == PanelCorner.TopRight &&
@@ -85,34 +91,40 @@ namespace StonewardsBellControl
                      _verticalOffset.Value == 200))
                 {
                     _anchor.Value = PanelCorner.BottomLeft;
-                    _verticalOffset.Value = 92;
+                    _horizontalOffset.Value = 26;
+                    _verticalOffset.Value = 80;
                 }
                 else if (_anchor.Value == PanelCorner.BottomLeft &&
                     _horizontalOffset.Value == 14 &&
                     _verticalOffset.Value == 146)
                 {
-                    _verticalOffset.Value = 92;
+                    _horizontalOffset.Value = 26;
+                    _verticalOffset.Value = 80;
                 }
             }
 
-            // 0.2.4-0.2.5 followed Emote by default, which caused a visible
-            // jump once the game created its UI Toolkit HUD. Replace only the
-            // untouched legacy preset with immediate fixed positioning.
-            // Customized anchors, offsets or Emote options remain unchanged.
             if (_anchor.Value == PanelCorner.BottomLeft &&
-                _horizontalOffset.Value == 14 &&
-                _verticalOffset.Value == 92 &&
-                _followEmote.Value &&
                 _emoteGap.Value == 12 &&
                 _emoteHorizontalAdjust.Value == 0)
             {
-                _horizontalOffset.Value = 26;
-                _verticalOffset.Value = 80;
-                _followEmote.Value = false;
-                Logger.LogInfo("Default Bell Control layout now uses a fixed position above Emote.");
+                // Convert the unmodified 0.2.4/0.2.5 default or the v0.2.6
+                // fixed preset back to Emote-following. Do not alter custom
+                // horizontal or vertical offsets.
+                bool oldAutoPreset =
+                    _horizontalOffset.Value == 14 &&
+                    _verticalOffset.Value == 92;
+                bool oldFixedPreset =
+                    _horizontalOffset.Value == 26 &&
+                    _verticalOffset.Value == 80;
+
+                if (oldAutoPreset || oldFixedPreset)
+                {
+                    _followEmote.Value = true;
+                    Logger.LogInfo("Restored automatic Emote positioning with no visible startup jump.");
+                }
             }
 
-            _layoutRevision.Value = 3;
+            _layoutRevision.Value = 4;
             Config.Save();
         }
 
@@ -125,6 +137,9 @@ namespace StonewardsBellControl
                 GuestsMayRing = false;
                 _wasHosting = hosting;
                 _uiUnavailable = false;
+                _anchorFallbackLocked = false;
+                _anchorSearchStarted = false;
+                _anchorDeadline = 0f;
                 if (_emoteHud != null)
                     _emoteHud.Reset();
                 DisposePanel();
@@ -155,20 +170,63 @@ namespace StonewardsBellControl
                 }
             }
 
-            // The Emote badge is found once and then tracked by its live
-            // UI Toolkit bounds, including when the screen resolution changes.
+            bool follow = _followEmote.Value &&
+                _anchor.Value == PanelCorner.BottomLeft;
             Rect? emoteBadge = null;
-            if (_followEmote.Value && _anchor.Value == PanelCorner.BottomLeft)
+            bool show = true;
+
+            if (follow && !_anchorFallbackLocked)
             {
-                _emoteHud.RefreshIfNeeded();
-                Rect bounds;
-                if (_emoteHud.TryGetBadgeBounds(out bounds))
-                    emoteBadge = bounds;
+                // Hosting can begin in a pre-game lobby long before Emote
+                // exists. Start the timeout only after gameplay input is live.
+                var input = InputManager.Instance;
+                bool gameReady = input != null &&
+                    (input.CurrentInputState == InputManager.InputState.Gameplay ||
+                     input.CurrentInputState == InputManager.InputState.Dead);
+                if (!gameReady && !_anchorSearchStarted)
+                {
+                    show = false;
+                }
+                else
+                {
+                    if (!_anchorSearchStarted)
+                    {
+                        _anchorSearchStarted = true;
+                        _anchorDeadline = Time.unscaledTime + AnchorResolutionTimeout;
+                    }
+                    _emoteHud.RefreshIfNeeded();
+                    Rect bounds;
+                    if (_emoteHud.TryGetBadgeBounds(out bounds))
+                    {
+                        emoteBadge = bounds;
+                    }
+                    else if (_emoteHud.WasLocated)
+                    {
+                        // The shortcut can disappear in menus. Hide the
+                        // panel, rather than snapping back to manual offsets.
+                        show = false;
+                    }
+                    else if (Time.unscaledTime < _anchorDeadline)
+                    {
+                        show = false;
+                    }
+                    else
+                    {
+                        // If the Emote UI is missing entirely, show the fixed
+                        // fallback and never jump to the tracker mid-session.
+                        _anchorFallbackLocked = true;
+                        Logger.LogWarning("Emote HUD unavailable; using fixed layout for this session.");
+                    }
+                }
             }
 
-            _panel.UpdateLayout(_anchor.Value, _horizontalOffset.Value,
-                _verticalOffset.Value, _scale.Value, _avoidGoldCounter.Value,
-                emoteBadge, _emoteGap.Value, _emoteHorizontalAdjust.Value);
+            if (show)
+            {
+                _panel.UpdateLayout(_anchor.Value, _horizontalOffset.Value,
+                    _verticalOffset.Value, _scale.Value, _avoidGoldCounter.Value,
+                    emoteBadge, _emoteGap.Value, _emoteHorizontalAdjust.Value);
+            }
+            _panel.SetVisible(show);
             _panel.UpdateInteraction();
         }
 

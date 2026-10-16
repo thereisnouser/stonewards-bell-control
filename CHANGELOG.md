@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.7] - Unreleased (experimental)
+
+- Restored automatic Emote-relative positioning by default; the Canvas waits invisibly until the native Emote HUD is located.
+- Rapid but throttled UI Toolkit discovery starts when gameplay input becomes active, not in the host lobby.
+- Added an 8-second gameplay-only timeout with a session-locked fixed fallback, avoiding late visible position jumps.
+- Calculated screen-space Canvas scaling before the first visible frame.
+- Migrated old default fixed-position settings, preserving custom anchors, offsets, F8 and network bell restrictions.
+
+> Requires compilation and in-game visual verification.
+
 ## [0.2.6] - Unreleased (experimental)
 
 - Made the compact single-row panel appear immediately at a fixed BottomLeft position above Emote (horizontal offset 26, vertical offset 80).

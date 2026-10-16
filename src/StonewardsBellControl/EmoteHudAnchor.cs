@@ -13,8 +13,11 @@ namespace StonewardsBellControl
     /// </summary>
     internal sealed class EmoteHudAnchor
     {
-        private const float RetrySeconds = 4f;
-        private const int MaxProbesPerHostSession = 5;
+        // Check promptly while the HUD initializes, then throttle discovery.
+        // Avoid scanning the UI tree every frame (it can be quite large).
+        private const float InitialRetrySeconds = 0.35f;
+        private const float LaterRetrySeconds = 1f;
+        private const int MaxProbesPerHostSession = 16;
         private const int MaxVisitedElements = 4000;
 
         private readonly ManualLogSource _log;
@@ -23,6 +26,9 @@ namespace StonewardsBellControl
         private int _probeCount;
         private float _nextProbe;
         private bool _loggedFallback;
+        private bool _everLocated;
+
+        public bool WasLocated => _everLocated;
 
         public EmoteHudAnchor(ManualLogSource log)
         {
@@ -36,6 +42,7 @@ namespace StonewardsBellControl
             _probeCount = 0;
             _nextProbe = 0f;
             _loggedFallback = false;
+            _everLocated = false;
         }
 
         public void RefreshIfNeeded()
@@ -50,7 +57,8 @@ namespace StonewardsBellControl
                 return;
 
             _probeCount++;
-            _nextProbe = Time.unscaledTime + RetrySeconds;
+            _nextProbe = Time.unscaledTime +
+                (_probeCount <= 6 ? InitialRetrySeconds : LaterRetrySeconds);
             Discover();
         }
 
@@ -139,6 +147,7 @@ namespace StonewardsBellControl
                 {
                     _emoteLabel = best;
                     _emoteBadge = bestBadge ?? best;
+                    _everLocated = true;
                     _log.LogInfo("Located Emote HUD. Bell Control will follow its live position.");
                     return;
                 }
@@ -146,7 +155,7 @@ namespace StonewardsBellControl
                 if (!_loggedFallback)
                 {
                     _loggedFallback = true;
-                    _log.LogWarning("Emote HUD not found yet. Using the bottom-left fallback position.");
+                    _log.LogInfo("Emote HUD is not ready yet; retrying before displaying Bell Control.");
                 }
             }
             catch (Exception ex)
@@ -154,7 +163,7 @@ namespace StonewardsBellControl
                 if (!_loggedFallback)
                 {
                     _loggedFallback = true;
-                    _log.LogWarning("Emote HUD discovery failed; using fallback: " + ex.Message);
+                    _log.LogWarning("Emote HUD discovery attempt failed: " + ex.Message);
                 }
             }
         }
