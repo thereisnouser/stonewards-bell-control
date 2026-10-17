@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1
+
+- Replaced the package icon with the pixel-art Calling Bell and a matching padlock.
+- No changes to bell permissions or HUD behavior.
+
 ## 0.1.0 — Initial public release
 
 - Host-only control of guest bell ringing, with guests blocked by default each hosted session.

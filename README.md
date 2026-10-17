@@ -2,7 +2,7 @@
 
 A lightweight **host-side** mod for Stonewards that lets the host decide when teammates can ring the wave bell.
 
-**Version:** `0.1.0` · **Game:** Stonewards `0.2.3` · **Loader:** BepInEx 5
+**Version:** `0.1.1` · **Game:** Stonewards `0.2.3` · **Loader:** BepInEx 5
 
 ## Features
 
@@ -53,7 +53,7 @@ powershell -ExecutionPolicy Bypass -File .\package-thunderstore.ps1 `
   -ProfileDir "C:\Users\user\AppData\Roaming\r2modmanPlus-local\Stonewards\profiles\stonewards-bell-control"
 ```
 
-Result: `dist/thereisnouser-BellControl-0.1.0.zip`. The script validates the version, PNG icon, DLL and ZIP contents before finishing; it **does not upload** the package.
+Result: `dist/thereisnouser-BellControl-0.1.1.zip`. The script validates the version, PNG icon, DLL and ZIP contents before finishing; it **does not upload** the package.
 
 See [Thunderstore description](thunderstore/README.md), [multiplayer tests](docs/TESTING.md), [changelog](CHANGELOG.md), or [report an issue](https://github.com/thereisnouser/stonewards-bell-control/issues).
 

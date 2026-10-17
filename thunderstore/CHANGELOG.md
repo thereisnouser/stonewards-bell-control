@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1
+
+- Replaced the package icon with the pixel-art Calling Bell and a matching padlock.
+- No changes to bell permissions or HUD behavior.
+
 ## 0.1.0 — Initial public release
 
 - Added host-controlled guest bell permissions, blocked by default each session.

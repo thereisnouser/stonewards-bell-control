@@ -1,6 +1,6 @@
 {
   "name": "BellControl",
-  "version_number": "0.1.0",
+  "version_number": "0.1.1",
   "website_url": "https://github.com/thereisnouser/stonewards-bell-control",
   "description": "Host-only bell permissions for Stonewards. Block guests from ringing until you allow them with F8 or a compact in-game button. Guests do not need the mod.",
   "dependencies": [
